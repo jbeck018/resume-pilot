@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 220" fill="none">
+  <rect width="170" height="220" fill="#ffffff"/>
+  <rect x="10" y="10" width="150" height="200" fill="#fafafa" stroke="#e2e8f0" stroke-width="0.5"/>
+
+  <!-- Name -->
+  <text x="20" y="26" font-family="Roboto, sans-serif" font-size="12" font-weight="bold" fill="#1e293b">Alex Kim</text>
+
+  <!-- Contact with GitHub prominent -->
+  <text x="20" y="36" font-family="Roboto, sans-serif" font-size="4" fill="#64748b">alex@email.com | github.com/alexkim | linkedin.com/in/alexkim | Seattle, WA</text>
+
+  <!-- Technical Skills Section (Prominent) -->
+  <rect x="18" y="42" width="134" height="38" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5" rx="2"/>
+  <text x="22" y="52" font-family="Roboto, sans-serif" font-size="5" font-weight="bold" fill="#0ea5e9" letter-spacing="0.5">TECHNICAL SKILLS</text>
+
+  <text x="22" y="62" font-family="Roboto, sans-serif" font-size="3.5" font-weight="bold" fill="#1e293b">Languages:</text>
+  <text x="48" y="62" font-family="Roboto Mono, monospace" font-size="3.5" fill="#64748b">Python, Go, TypeScript, Rust, Java</text>
+
+  <text x="22" y="69" font-family="Roboto, sans-serif" font-size="3.5" font-weight="bold" fill="#1e293b">Cloud/Infra:</text>
+  <text x="48" y="69" font-family="Roboto Mono, monospace" font-size="3.5" fill="#64748b">AWS, GCP, Kubernetes, Docker, Terraform</text>
+
+  <text x="22" y="76" font-family="Roboto, sans-serif" font-size="3.5" font-weight="bold" fill="#1e293b">Databases:</text>
+  <text x="48" y="76" font-family="Roboto Mono, monospace" font-size="3.5" fill="#64748b">PostgreSQL, Redis, MongoDB, Elasticsearch</text>
+
+  <!-- Experience Section -->
+  <text x="20" y="92" font-family="Roboto, sans-serif" font-size="5" font-weight="bold" fill="#0ea5e9" letter-spacing="0.5">EXPERIENCE</text>
+
+  <text x="20" y="102" font-family="Roboto, sans-serif" font-size="4.5" font-weight="bold" fill="#1e293b">Staff Software Engineer</text>
+  <text x="150" y="102" text-anchor="end" font-family="Roboto, sans-serif" font-size="3.5" fill="#64748b">2021-Present</text>
+  <text x="20" y="108" font-family="Roboto, sans-serif" font-size="3.5" fill="#64748b">Meta | Menlo Park, CA</text>
+  <circle cx="24" cy="116" r="1" fill="#0ea5e9"/>
+  <text x="28" y="118" font-family="Roboto, sans-serif" font-size="3.5" fill="#1e293b">Reduced API latency by 40% serving 100M+ daily requests</text>
+  <circle cx="24" cy="124" r="1" fill="#0ea5e9"/>
+  <text x="28" y="126" font-family="Roboto, sans-serif" font-size="3.5" fill="#1e293b">Designed distributed system handling 500K TPS</text>
+
+  <text x="20" y="138" font-family="Roboto, sans-serif" font-size="4.5" font-weight="bold" fill="#1e293b">Senior Software Engineer</text>
+  <text x="150" y="138" text-anchor="end" font-family="Roboto, sans-serif" font-size="3.5" fill="#64748b">2018-2021</text>
+  <text x="20" y="144" font-family="Roboto, sans-serif" font-size="3.5" fill="#64748b">Stripe | San Francisco, CA</text>
+  <circle cx="24" cy="152" r="1" fill="#0ea5e9"/>
+  <text x="28" y="154" font-family="Roboto, sans-serif" font-size="3.5" fill="#1e293b">Built payment processing pipeline handling $10B/year</text>
+
+  <!-- Projects Section -->
+  <text x="20" y="168" font-family="Roboto, sans-serif" font-size="5" font-weight="bold" fill="#0ea5e9" letter-spacing="0.5">PROJECTS</text>
+
+  <text x="20" y="178" font-family="Roboto, sans-serif" font-size="4" font-weight="bold" fill="#1e293b">distributed-cache</text>
+  <text x="62" y="178" font-family="Roboto Mono, monospace" font-size="3" fill="#0ea5e9">github.com/alexkim/dcache</text>
+  <text x="120" y="178" font-family="Roboto, sans-serif" font-size="3" fill="#64748b">2.1K stars</text>
+  <text x="20" y="184" font-family="Roboto, sans-serif" font-size="3.5" fill="#64748b">High-performance distributed cache in Rust</text>
+
+  <!-- Education -->
+  <text x="20" y="196" font-family="Roboto, sans-serif" font-size="5" font-weight="bold" fill="#0ea5e9" letter-spacing="0.5">EDUCATION</text>
+  <text x="20" y="206" font-family="Roboto, sans-serif" font-size="4" fill="#1e293b">M.S. Computer Science - Carnegie Mellon University, 2018</text>
+</svg>

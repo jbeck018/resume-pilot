@@ -1,0 +1,1 @@
+[["entry_1768868360993_wfubfc",{"id":"entry_1768868360993_wfubfc","key":"research-context","namespace":"token-tracking-research","content":"SaaS application needs per-user token budgets and usage tracking across multiple LLM providers (OpenAI, Anthropic, Google). Database: Supabase. Backend: SvelteKit with Inngest workflows."}]]

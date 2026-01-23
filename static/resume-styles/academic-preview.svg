@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 220" fill="none">
+  <rect width="170" height="220" fill="#ffffff"/>
+  <rect x="10" y="10" width="150" height="200" fill="#fafafa" stroke="#999999" stroke-width="0.5"/>
+
+  <!-- Name -->
+  <text x="85" y="28" text-anchor="middle" font-family="Times New Roman, serif" font-size="12" font-weight="bold" fill="#1a1a1a">Dr. Maria Santos, Ph.D.</text>
+
+  <!-- Affiliation -->
+  <text x="85" y="38" text-anchor="middle" font-family="Times New Roman, serif" font-size="4" fill="#1a1a1a">Department of Computer Science</text>
+  <text x="85" y="44" text-anchor="middle" font-family="Times New Roman, serif" font-size="4" fill="#4a4a4a">Massachusetts Institute of Technology</text>
+  <text x="85" y="50" text-anchor="middle" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">msantos@mit.edu | ORCID: 0000-0002-1234-5678</text>
+
+  <!-- Education -->
+  <text x="20" y="64" font-family="Times New Roman, serif" font-size="5" font-weight="bold" fill="#1a1a1a" letter-spacing="0.5">EDUCATION</text>
+  <text x="20" y="74" font-family="Times New Roman, serif" font-size="4" font-weight="bold" fill="#1a1a1a">Ph.D. in Computer Science</text>
+  <text x="145" y="74" text-anchor="end" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">2020</text>
+  <text x="20" y="80" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">Stanford University</text>
+  <text x="20" y="86" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a" font-style="italic">Dissertation: "Neural Approaches to Program Synthesis"</text>
+  <text x="20" y="92" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">Advisor: Dr. James Wilson</text>
+
+  <!-- Research Interests -->
+  <text x="20" y="104" font-family="Times New Roman, serif" font-size="5" font-weight="bold" fill="#1a1a1a" letter-spacing="0.5">RESEARCH INTERESTS</text>
+  <text x="20" y="112" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">Program synthesis, neural-symbolic AI, formal verification, automated reasoning</text>
+
+  <!-- Publications -->
+  <text x="20" y="124" font-family="Times New Roman, serif" font-size="5" font-weight="bold" fill="#1a1a1a" letter-spacing="0.5">SELECTED PUBLICATIONS</text>
+
+  <text x="20" y="134" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">Santos, M., Johnson, R., & Lee, S. (2024). Neural Program Synthesis with</text>
+  <text x="20" y="140" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">Formal Guarantees. Nature Machine Intelligence, 6(3), 234-248.</text>
+
+  <text x="20" y="150" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">Santos, M. & Chen, W. (2023). Scalable Verification of Deep Learning</text>
+  <text x="20" y="156" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">Systems. Proc. ICML 2023, 1234-1245.</text>
+
+  <!-- Teaching -->
+  <text x="20" y="168" font-family="Times New Roman, serif" font-size="5" font-weight="bold" fill="#1a1a1a" letter-spacing="0.5">TEACHING EXPERIENCE</text>
+  <text x="20" y="178" font-family="Times New Roman, serif" font-size="3.5" fill="#1a1a1a">Instructor of Record:</text>
+  <text x="20" y="184" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">- CS 6.867: Machine Learning (Fall 2023, Spring 2024)</text>
+  <text x="20" y="190" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">- CS 6.820: Formal Methods (Fall 2022)</text>
+
+  <!-- Grants -->
+  <text x="20" y="202" font-family="Times New Roman, serif" font-size="5" font-weight="bold" fill="#1a1a1a" letter-spacing="0.5">GRANTS & AWARDS</text>
+  <text x="20" y="210" font-family="Times New Roman, serif" font-size="3.5" fill="#4a4a4a">NSF CAREER Award ($500,000) - 2023-2028</text>
+</svg>

@@ -1,0 +1,27 @@
+{
+  "entries": {
+    "research/mcp-integration-sveltekit": {
+      "key": "research/mcp-integration-sveltekit",
+      "value": {
+        "topic": "MCP Integration for Resume Pilot",
+        "date": "2026-01-19",
+        "findings": [
+          "claude-flow exposes 87+ MCP tools via stdio transport",
+          "Vercel AI SDK provides createMCPClient for server-side integration",
+          "SvelteKit can use @ai-sdk/mcp package with HTTP or stdio transports",
+          "Hive-mind offers Queen-Worker coordination with 5+ agent types",
+          "Integration requires spawning MCP server as child process or connecting via HTTP"
+        ],
+        "recommendation": "Use @ai-sdk/mcp with HTTP transport for production deployments"
+      },
+      "metadata": {
+        "type": "research",
+        "project": "resume-pilot"
+      },
+      "storedAt": "2026-01-20T00:56:02.883Z",
+      "accessCount": 0,
+      "lastAccessed": "2026-01-20T00:56:02.883Z"
+    }
+  },
+  "version": "3.0.0"
+}

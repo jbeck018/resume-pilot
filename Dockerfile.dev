@@ -1,0 +1,49 @@
+# =============================================================================
+# Resume Pilot - Development Dockerfile
+# =============================================================================
+# Development image with hot reload support
+#
+# Usage with docker-compose:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Standalone usage:
+#   docker build -f Dockerfile.dev -t resume-pilot:dev .
+#   docker run -p 5173:5173 -v $(pwd):/app -v /app/node_modules resume-pilot:dev
+# =============================================================================
+
+FROM node:20-alpine
+
+# Install build dependencies and useful development tools
+RUN apk add --no-cache \
+    libc6-compat \
+    git \
+    curl \
+    bash
+
+WORKDIR /app
+
+# Copy package files first for better layer caching
+COPY package.json package-lock.json ./
+
+# Install ALL dependencies (including devDependencies)
+RUN npm ci
+
+# Copy the rest of the source code
+# Note: In development, this is typically overridden by a volume mount
+COPY . .
+
+# Set development environment
+ENV NODE_ENV=development
+ENV HOST=0.0.0.0
+ENV PORT=5173
+
+# Expose Vite dev server port
+EXPOSE 5173
+
+# Expose HMR websocket port (Vite uses the same port by default)
+# If you need a separate HMR port, uncomment and configure in vite.config.ts
+# EXPOSE 24678
+
+# Run the development server with host binding for Docker
+# The --host flag allows connections from outside the container
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -1,0 +1,64 @@
+# LiteLLM Proxy Configuration
+# Documentation: https://docs.litellm.ai/docs/proxy/configs
+
+model_list:
+  # Anthropic Claude models
+  - model_name: claude-3-5-sonnet-20241022
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      description: "Claude 3.5 Sonnet - Best for complex tasks"
+
+  - model_name: claude-3-haiku-20240307
+    litellm_params:
+      model: anthropic/claude-3-haiku-20240307
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      description: "Claude 3 Haiku - Fast and affordable"
+
+  # OpenAI models
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      description: "GPT-4o - Multimodal flagship"
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      description: "GPT-4o Mini - Fast and affordable"
+
+  # Google Gemini models
+  - model_name: gemini-1.5-pro
+    litellm_params:
+      model: gemini/gemini-1.5-pro
+      api_key: os.environ/GOOGLE_API_KEY
+    model_info:
+      description: "Gemini 1.5 Pro - Long context"
+
+  - model_name: gemini-1.5-flash
+    litellm_params:
+      model: gemini/gemini-1.5-flash
+      api_key: os.environ/GOOGLE_API_KEY
+    model_info:
+      description: "Gemini 1.5 Flash - Fast and affordable"
+
+# Router settings
+router_settings:
+  routing_strategy: simple-shuffle
+  enable_fallbacks: true
+
+# General settings
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+
+# Logging
+litellm_settings:
+  success_callback: ["langfuse"]  # Optional: add observability
+  failure_callback: ["langfuse"]
+  set_verbose: false

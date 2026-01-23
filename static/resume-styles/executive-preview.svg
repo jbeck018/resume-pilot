@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 220" fill="none">
+  <rect width="170" height="220" fill="#ffffff"/>
+  <rect x="10" y="10" width="150" height="200" fill="#fafafa" stroke="#c9c9c9" stroke-width="0.5"/>
+
+  <!-- Subtle accent line -->
+  <rect x="10" y="10" width="3" height="200" fill="#16213e"/>
+
+  <!-- Name -->
+  <text x="85" y="30" text-anchor="middle" font-family="Garamond, serif" font-size="14" font-weight="bold" fill="#1a1a2e">WILLIAM R. THORNTON</text>
+  <text x="85" y="40" text-anchor="middle" font-family="Garamond, serif" font-size="5" fill="#16213e" letter-spacing="2">CHIEF EXECUTIVE OFFICER</text>
+
+  <!-- Contact -->
+  <text x="85" y="50" text-anchor="middle" font-family="Garamond, serif" font-size="4" fill="#4a4a5a">wthornton@email.com | +1 (555) 987-6543 | LinkedIn</text>
+
+  <!-- Divider -->
+  <line x1="25" y1="56" x2="145" y2="56" stroke="#16213e" stroke-width="0.5"/>
+
+  <!-- Executive Profile -->
+  <text x="25" y="66" font-family="Garamond, serif" font-size="5" font-weight="bold" fill="#16213e" letter-spacing="1">EXECUTIVE PROFILE</text>
+  <rect x="25" y="70" width="120" height="3" fill="#f0f0f0" rx="1"/>
+  <rect x="25" y="75" width="115" height="3" fill="#f0f0f0" rx="1"/>
+  <rect x="25" y="80" width="110" height="3" fill="#f0f0f0" rx="1"/>
+
+  <!-- Divider -->
+  <line x1="25" y1="90" x2="145" y2="90" stroke="#c9c9c9" stroke-width="0.5"/>
+
+  <!-- Key Achievements -->
+  <text x="25" y="100" font-family="Garamond, serif" font-size="5" font-weight="bold" fill="#16213e" letter-spacing="1">KEY ACHIEVEMENTS</text>
+  <circle cx="29" cy="110" r="1.5" fill="#16213e"/>
+  <text x="35" y="112" font-family="Garamond, serif" font-size="4" fill="#1a1a2e">Drove $2.5B revenue growth over 5-year tenure</text>
+  <circle cx="29" cy="120" r="1.5" fill="#16213e"/>
+  <text x="35" y="122" font-family="Garamond, serif" font-size="4" fill="#1a1a2e">Led successful M&A of 3 companies ($500M+ value)</text>
+  <circle cx="29" cy="130" r="1.5" fill="#16213e"/>
+  <text x="35" y="132" font-family="Garamond, serif" font-size="4" fill="#1a1a2e">Expanded operations to 15 countries, 12K employees</text>
+
+  <!-- Divider -->
+  <line x1="25" y1="140" x2="145" y2="140" stroke="#c9c9c9" stroke-width="0.5"/>
+
+  <!-- Leadership Experience -->
+  <text x="25" y="150" font-family="Garamond, serif" font-size="5" font-weight="bold" fill="#16213e" letter-spacing="1">LEADERSHIP EXPERIENCE</text>
+
+  <text x="25" y="160" font-family="Garamond, serif" font-size="4.5" font-weight="bold" fill="#1a1a2e">Chief Executive Officer</text>
+  <text x="145" y="160" text-anchor="end" font-family="Garamond, serif" font-size="4" fill="#4a4a5a">2018 - Present</text>
+  <text x="25" y="166" font-family="Garamond, serif" font-size="4" fill="#4a4a5a">GlobalTech Industries | $1.2B Revenue | 5,000 Employees</text>
+  <rect x="25" y="170" width="120" height="3" fill="#f0f0f0" rx="1"/>
+
+  <!-- Divider -->
+  <line x1="25" y1="180" x2="145" y2="180" stroke="#c9c9c9" stroke-width="0.5"/>
+
+  <!-- Board Positions -->
+  <text x="25" y="190" font-family="Garamond, serif" font-size="5" font-weight="bold" fill="#16213e" letter-spacing="1">BOARD POSITIONS</text>
+  <text x="25" y="200" font-family="Garamond, serif" font-size="4" fill="#1a1a2e">Board Member - TechCorp (NYSE: TC) | 2020 - Present</text>
+  <text x="25" y="207" font-family="Garamond, serif" font-size="4" fill="#1a1a2e">Advisory Board - Stanford GSB | 2019 - Present</text>
+</svg>

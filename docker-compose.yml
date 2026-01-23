@@ -1,0 +1,223 @@
+# =============================================================================
+# Resume Pilot - Docker Compose Configuration
+# =============================================================================
+# Local development services with all dependencies
+#
+# Usage:
+#   Start all services:     docker-compose up -d
+#   Start specific service: docker-compose up -d app postgres
+#   View logs:              docker-compose logs -f app
+#   Stop all services:      docker-compose down
+#   Clean everything:       docker-compose down -v --rmi local
+#
+# Services:
+#   - app:        SvelteKit application (development mode)
+#   - postgres:   PostgreSQL database for local development
+#   - redis:      Redis cache (optional)
+#   - inngest:    Inngest dev server for background jobs
+#   - litellm:    LiteLLM proxy for multi-provider LLM access
+#   - claude-flow: Claude-Flow MCP server for pattern learning
+# =============================================================================
+
+version: '3.8'
+
+# -----------------------------------------------------------------------------
+# Named Networks
+# -----------------------------------------------------------------------------
+networks:
+  resume-pilot-network:
+    driver: bridge
+    name: resume-pilot-network
+
+# -----------------------------------------------------------------------------
+# Named Volumes for Data Persistence
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    name: resume-pilot-postgres-data
+  redis_data:
+    name: resume-pilot-redis-data
+  litellm_data:
+    name: resume-pilot-litellm-data
+  claude_flow_data:
+    name: resume-pilot-claude-flow-data
+
+# -----------------------------------------------------------------------------
+# Services
+# -----------------------------------------------------------------------------
+services:
+  # ---------------------------------------------------------------------------
+  # Main Application (Development Mode)
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: resume-pilot-app
+    ports:
+      - "5173:5173"           # Vite dev server
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=5173
+      # Database - use local PostgreSQL instead of Supabase for dev
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/resume_pilot
+      # Inngest - point to local dev server
+      - INNGEST_DEV=1
+      - INNGEST_DEV_SERVER_URL=http://inngest:8288
+      # Claude-Flow MCP
+      - CLAUDE_FLOW_ENABLED=true
+      - CLAUDE_FLOW_MCP_URL=http://claude-flow:3001
+      - CLAUDE_FLOW_TRANSPORT=http
+      # LiteLLM Proxy
+      - LITELLM_API_BASE=http://litellm:4000
+      # Redis (if used for caching)
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      # Anonymous volume to prevent overwriting node_modules
+      - /app/node_modules
+      # Persist Vite cache
+      - /app/.svelte-kit
+    depends_on:
+      postgres:
+        condition: service_healthy
+      inngest:
+        condition: service_started
+    networks:
+      - resume-pilot-network
+    # Allow connecting to host services (e.g., Supabase CLI)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  # Local database for development (alternative to Supabase)
+  # Useful for offline development or CI/CD testing
+  postgres:
+    image: postgres:16-alpine
+    container_name: resume-pilot-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: resume_pilot
+      # Improve performance for development
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount init scripts (optional)
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d resume_pilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - resume-pilot-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis Cache (Optional)
+  # ---------------------------------------------------------------------------
+  # Used for session storage, caching, and rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: resume-pilot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - resume-pilot-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Inngest Dev Server
+  # ---------------------------------------------------------------------------
+  # Background job processing for resume generation, job discovery, etc.
+  inngest:
+    image: inngest/inngest:latest
+    container_name: resume-pilot-inngest
+    ports:
+      - "8288:8288"           # Inngest UI and API
+    environment:
+      - INNGEST_DEV=1
+    # Point to the SvelteKit app's Inngest endpoint
+    # Using host.docker.internal to reach the app on the host
+    command: inngest dev -u http://app:5173/api/inngest --no-discovery
+    networks:
+      - resume-pilot-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # LiteLLM Proxy
+  # ---------------------------------------------------------------------------
+  # Multi-provider LLM access with caching and rate limiting
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: resume-pilot-litellm
+    ports:
+      - "4000:4000"
+    environment:
+      - LITELLM_MASTER_KEY=sk-dev-1234567890
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/litellm
+    volumes:
+      - ./litellm-config.yaml:/app/config.yaml:ro
+    command: --config /app/config.yaml --detailed_debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - resume-pilot-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Claude-Flow MCP Server
+  # ---------------------------------------------------------------------------
+  # Pattern learning and swarm coordination for AI development
+  claude-flow:
+    image: node:20-alpine
+    container_name: resume-pilot-claude-flow
+    working_dir: /app
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - CLAUDE_FLOW_MCP_PORT=3001
+      - CLAUDE_FLOW_MCP_HOST=0.0.0.0
+      - CLAUDE_FLOW_MEMORY_BACKEND=hybrid
+      - CLAUDE_FLOW_MEMORY_PATH=/app/data/memory
+    volumes:
+      - claude_flow_data:/app/data
+    command: >
+      sh -c "npm install -g @claude-flow/cli@latest &&
+             npx @claude-flow/cli@latest mcp start --port 3001 --host 0.0.0.0"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - resume-pilot-network
+    restart: unless-stopped

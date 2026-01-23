@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 220" fill="none">
+  <rect width="170" height="220" fill="#ffffff"/>
+  <rect x="10" y="10" width="150" height="200" fill="#fafafa" stroke="#e5e7eb" stroke-width="0.5"/>
+
+  <!-- Name -->
+  <text x="20" y="28" font-family="Inter, sans-serif" font-size="14" font-weight="bold" fill="#1f2937">Sarah Chen</text>
+
+  <!-- Contact with links -->
+  <text x="20" y="38" font-family="Inter, sans-serif" font-size="4" fill="#6b7280">sarah@email.com | github.com/sarahchen | linkedin.com/in/sarahchen</text>
+
+  <!-- Summary -->
+  <rect x="20" y="44" width="130" height="3" fill="#f3f4f6" rx="1"/>
+  <rect x="20" y="49" width="115" height="3" fill="#f3f4f6" rx="1"/>
+
+  <!-- Technical Skills Section -->
+  <text x="20" y="62" font-family="Inter, sans-serif" font-size="5" font-weight="bold" fill="#3b82f6" letter-spacing="1">TECHNICAL SKILLS</text>
+
+  <text x="20" y="72" font-family="Inter, sans-serif" font-size="4" font-weight="bold" fill="#1f2937">Languages:</text>
+  <text x="50" y="72" font-family="Inter, sans-serif" font-size="4" fill="#6b7280">TypeScript, Python, Go, Rust</text>
+
+  <text x="20" y="79" font-family="Inter, sans-serif" font-size="4" font-weight="bold" fill="#1f2937">Frameworks:</text>
+  <text x="50" y="79" font-family="Inter, sans-serif" font-size="4" fill="#6b7280">React, Node.js, Django, FastAPI</text>
+
+  <text x="20" y="86" font-family="Inter, sans-serif" font-size="4" font-weight="bold" fill="#1f2937">Cloud:</text>
+  <text x="50" y="86" font-family="Inter, sans-serif" font-size="4" fill="#6b7280">AWS, GCP, Kubernetes, Terraform</text>
+
+  <!-- Experience Section -->
+  <text x="20" y="100" font-family="Inter, sans-serif" font-size="5" font-weight="bold" fill="#3b82f6" letter-spacing="1">EXPERIENCE</text>
+
+  <text x="20" y="110" font-family="Inter, sans-serif" font-size="5" font-weight="bold" fill="#1f2937">Senior Software Engineer</text>
+  <text x="130" y="110" text-anchor="end" font-family="Inter, sans-serif" font-size="4" fill="#6b7280">2021-Present</text>
+  <text x="20" y="116" font-family="Inter, sans-serif" font-size="4" fill="#6b7280">TechCorp | San Francisco, CA</text>
+  <circle cx="24" cy="124" r="1" fill="#3b82f6"/>
+  <rect x="28" y="122" width="110" height="3" fill="#f3f4f6" rx="1"/>
+  <circle cx="24" cy="130" r="1" fill="#3b82f6"/>
+  <rect x="28" y="128" width="100" height="3" fill="#f3f4f6" rx="1"/>
+
+  <text x="20" y="142" font-family="Inter, sans-serif" font-size="5" font-weight="bold" fill="#1f2937">Software Engineer</text>
+  <text x="130" y="142" text-anchor="end" font-family="Inter, sans-serif" font-size="4" fill="#6b7280">2019-2021</text>
+  <text x="20" y="148" font-family="Inter, sans-serif" font-size="4" fill="#6b7280">StartupXYZ | Remote</text>
+  <circle cx="24" cy="156" r="1" fill="#3b82f6"/>
+  <rect x="28" y="154" width="105" height="3" fill="#f3f4f6" rx="1"/>
+
+  <!-- Projects Section -->
+  <text x="20" y="170" font-family="Inter, sans-serif" font-size="5" font-weight="bold" fill="#3b82f6" letter-spacing="1">PROJECTS</text>
+  <text x="20" y="180" font-family="Inter, sans-serif" font-size="4" font-weight="bold" fill="#1f2937">Open Source CLI Tool</text>
+  <text x="72" y="180" font-family="Inter, sans-serif" font-size="4" fill="#3b82f6">github.com/sarahchen/tool</text>
+  <rect x="20" y="184" width="120" height="3" fill="#f3f4f6" rx="1"/>
+
+  <!-- Education -->
+  <text x="20" y="198" font-family="Inter, sans-serif" font-size="5" font-weight="bold" fill="#3b82f6" letter-spacing="1">EDUCATION</text>
+  <text x="20" y="206" font-family="Inter, sans-serif" font-size="4" fill="#1f2937">B.S. Computer Science - Stanford University, 2019</text>
+</svg>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 220" fill="none">
+  <rect width="170" height="220" fill="#ffffff"/>
+  <rect x="10" y="10" width="150" height="200" fill="#fafafa" stroke="#d1d5db" stroke-width="0.5"/>
+
+  <!-- Name -->
+  <text x="85" y="26" text-anchor="middle" font-family="Calibri, sans-serif" font-size="12" font-weight="bold" fill="#1f2937">Jordan Taylor</text>
+
+  <!-- Contact -->
+  <text x="85" y="36" text-anchor="middle" font-family="Calibri, sans-serif" font-size="4" fill="#6b7280">jtaylor@university.edu | (555) 234-5678 | linkedin.com/in/jtaylor | Boston, MA</text>
+
+  <!-- Divider -->
+  <line x1="20" y1="42" x2="150" y2="42" stroke="#2563eb" stroke-width="0.5"/>
+
+  <!-- Education (Prominent) -->
+  <text x="20" y="52" font-family="Calibri, sans-serif" font-size="5" font-weight="bold" fill="#2563eb" letter-spacing="0.5">EDUCATION</text>
+
+  <text x="20" y="62" font-family="Calibri, sans-serif" font-size="4.5" font-weight="bold" fill="#1f2937">Bachelor of Science in Computer Science</text>
+  <text x="145" y="62" text-anchor="end" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Expected May 2025</text>
+  <text x="20" y="68" font-family="Calibri, sans-serif" font-size="4" fill="#6b7280">Boston University, Boston, MA</text>
+  <text x="20" y="74" font-family="Calibri, sans-serif" font-size="3.5" fill="#1f2937">GPA: 3.7/4.0 | Dean's List: Fall 2022, Spring 2023, Fall 2023</text>
+  <text x="20" y="80" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Relevant Coursework: Data Structures, Algorithms, Database Systems, Web Development</text>
+
+  <!-- Divider -->
+  <line x1="20" y1="86" x2="150" y2="86" stroke="#d1d5db" stroke-width="0.5"/>
+
+  <!-- Projects -->
+  <text x="20" y="96" font-family="Calibri, sans-serif" font-size="5" font-weight="bold" fill="#2563eb" letter-spacing="0.5">PROJECTS</text>
+
+  <text x="20" y="106" font-family="Calibri, sans-serif" font-size="4" font-weight="bold" fill="#1f2937">Campus Event Finder App</text>
+  <text x="100" y="106" font-family="Calibri, sans-serif" font-size="3.5" fill="#2563eb">github.com/jtaylor/eventfinder</text>
+  <circle cx="24" cy="114" r="1" fill="#2563eb"/>
+  <text x="28" y="116" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Built React Native app with 500+ active users</text>
+  <circle cx="24" cy="122" r="1" fill="#2563eb"/>
+  <text x="28" y="124" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Implemented REST API using Node.js and PostgreSQL</text>
+
+  <text x="20" y="134" font-family="Calibri, sans-serif" font-size="4" font-weight="bold" fill="#1f2937">ML Sentiment Analyzer</text>
+  <text x="78" y="134" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Capstone Project</text>
+  <circle cx="24" cy="142" r="1" fill="#2563eb"/>
+  <text x="28" y="144" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Achieved 92% accuracy with Python and TensorFlow</text>
+
+  <!-- Divider -->
+  <line x1="20" y1="152" x2="150" y2="152" stroke="#d1d5db" stroke-width="0.5"/>
+
+  <!-- Experience -->
+  <text x="20" y="162" font-family="Calibri, sans-serif" font-size="5" font-weight="bold" fill="#2563eb" letter-spacing="0.5">EXPERIENCE</text>
+
+  <text x="20" y="172" font-family="Calibri, sans-serif" font-size="4" font-weight="bold" fill="#1f2937">Software Engineering Intern</text>
+  <text x="145" y="172" text-anchor="end" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Summer 2024</text>
+  <text x="20" y="178" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">TechStartup Inc. | Boston, MA</text>
+  <circle cx="24" cy="186" r="1" fill="#2563eb"/>
+  <text x="28" y="188" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Developed features used by 10K+ customers</text>
+
+  <!-- Skills -->
+  <text x="20" y="200" font-family="Calibri, sans-serif" font-size="5" font-weight="bold" fill="#2563eb" letter-spacing="0.5">SKILLS</text>
+  <text x="20" y="208" font-family="Calibri, sans-serif" font-size="3.5" fill="#6b7280">Python, JavaScript, React, Node.js, SQL, Git, AWS | Languages: English (native), Spanish (fluent)</text>
+</svg>
