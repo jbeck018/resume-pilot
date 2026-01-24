@@ -5,11 +5,3 @@ compatibility_flags = ["nodejs_compat"]
 
 # Required for Pages - specifies the build output directory
 pages_build_output_dir = ".svelte-kit/cloudflare"
-
-[build]
-command = "npm run build"
-
-# Environment variables (set in Cloudflare dashboard for secrets)
-[vars]
-PUBLIC_SUPABASE_URL = ""
-PUBLIC_SUPABASE_ANON_KEY = ""
