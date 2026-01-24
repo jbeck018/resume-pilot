@@ -5,14 +5,14 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL } from '$env/static/public';
-import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 import type { UsageLimitResult, UsageIncrementResult, UsageTracking } from './types';
 import { UsageLimitExceededError } from './errors';
 
 class UsageServiceImpl {
 	private getSupabase() {
-		return createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+		return createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
 			cookies: {
 				getAll: () => [],
 				setAll: () => {}

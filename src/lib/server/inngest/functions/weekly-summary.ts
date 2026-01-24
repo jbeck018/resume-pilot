@@ -1,7 +1,7 @@
 import { inngest } from '../client';
 import { createServerClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL } from '$env/static/public';
-import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 import {
 	sendWeeklySummaryEmail,
 	shouldSendEmail,
@@ -17,7 +17,7 @@ export const sendWeeklySummaries = inngest.createFunction(
 	},
 	{ cron: '0 9 * * 1' }, // Every Monday at 9 AM UTC
 	async ({ step }) => {
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
 			cookies: {
 				getAll: () => [],
 				setAll: () => {}

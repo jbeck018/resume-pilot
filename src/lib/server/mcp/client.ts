@@ -5,7 +5,9 @@
 // Supports both stdio and HTTP transports with connection pooling.
 
 import { experimental_createMCPClient as createMCPClient, type MCPTransport } from 'ai';
-import { Experimental_StdioMCPTransport as StdioMCPTransport } from 'ai/mcp-stdio';
+
+// Note: StdioMCPTransport is dynamically imported only when needed to avoid
+// bundling child_process which doesn't work in Cloudflare Workers
 
 // Environment configuration
 const CLAUDE_FLOW_MCP_URL = process.env.CLAUDE_FLOW_MCP_URL || 'http://localhost:3001';
@@ -149,10 +151,18 @@ async function createMCPClientInstance(config: MCPClientConfig): Promise<MCPClie
 	let connected = true;
 
 	if (config.transport === 'stdio') {
-		transport = new StdioMCPTransport({
-			command: config.command!,
-			args: config.args
-		});
+		// Dynamic import to avoid bundling child_process in Cloudflare Workers
+		// This will only be executed in Node.js environments
+		try {
+			const { Experimental_StdioMCPTransport: StdioMCPTransport } = await import('ai/mcp-stdio');
+			transport = new StdioMCPTransport({
+				command: config.command!,
+				args: config.args
+			});
+		} catch (error) {
+			console.error('[MCP] stdio transport not available in this environment:', error);
+			throw new Error('stdio transport is not supported in this environment (requires Node.js)');
+		}
 	} else {
 		// HTTP transport using SSE
 		const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');

@@ -6,8 +6,8 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/server/database/types';
 import {
@@ -52,7 +52,7 @@ export {
  * Create a Supabase client with service role for server-side operations
  */
 function createSupabaseClient(): SupabaseClient<Database> {
-	return createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+	return createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
 		cookies: {
 			getAll: () => [],
 			setAll: () => {}

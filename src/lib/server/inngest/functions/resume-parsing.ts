@@ -1,15 +1,11 @@
 import { inngest } from '../client';
 import { createServerClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL } from '$env/static/public';
-import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 import { complete, selectModel } from '$lib/server/llm/client';
-import { createRequire } from 'module';
+import { extractText } from 'unpdf';
 import mammoth from 'mammoth';
 import type { ResumeStructuredData } from '$lib/server/database/schema';
-
-// pdf-parse is CommonJS and needs special handling in ESM
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
 
 // Resume parsing workflow
 export const parseResumeFile = inngest.createFunction(
@@ -25,7 +21,7 @@ export const parseResumeFile = inngest.createFunction(
 	async ({ event, step }) => {
 		const { userId, resumeId, fileUrl, fileType } = event.data;
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
 			cookies: {
 				getAll: () => [],
 				setAll: () => {}
@@ -55,17 +51,17 @@ export const parseResumeFile = inngest.createFunction(
 
 		// Step 2: Extract text content from the file
 		const extractedText = await step.run('extract-text', async () => {
-			// Convert array back to Buffer for parsing
-			const fileBuffer = Buffer.from(fileData);
+			// Convert array back to Uint8Array for parsing
+			const fileBuffer = new Uint8Array(fileData);
 
 			if (fileType === 'pdf') {
-				// Parse PDF
-				const pdfData = await pdfParse(fileBuffer);
-				return pdfData.text;
+				// Parse PDF using unpdf (edge-compatible, no Node.js-specific APIs)
+				const { text } = await extractText(fileBuffer);
+				return text;
 			} else if (fileType === 'docx') {
 				// Parse DOCX
 				const result = await mammoth.extractRawText({
-					buffer: fileBuffer
+					buffer: Buffer.from(fileBuffer)
 				});
 				return result.value;
 			} else {

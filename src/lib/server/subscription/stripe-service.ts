@@ -5,8 +5,8 @@
  */
 
 import Stripe from 'stripe';
-import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '$env/static/private';
-import { PUBLIC_APP_URL } from '$env/static/public';
+import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
 import { subscriptionService } from './subscription-service';
 import type { CreateCheckoutParams, CreatePortalParams, BillingInterval } from './types';
 import {
@@ -21,10 +21,10 @@ class StripeServiceImpl {
 
 	private getStripe(): Stripe {
 		if (!this.stripe) {
-			if (!STRIPE_SECRET_KEY) {
+			if (!env.STRIPE_SECRET_KEY) {
 				throw new Error('STRIPE_SECRET_KEY is not configured');
 			}
-			this.stripe = new Stripe(STRIPE_SECRET_KEY, {
+			this.stripe = new Stripe(env.STRIPE_SECRET_KEY, {
 				apiVersion: '2025-02-24.acacia'
 			});
 		}
@@ -35,7 +35,7 @@ class StripeServiceImpl {
 	 * Check if Stripe is configured
 	 */
 	isConfigured(): boolean {
-		return !!STRIPE_SECRET_KEY;
+		return !!env.STRIPE_SECRET_KEY;
 	}
 
 	// =========================================================================
@@ -184,12 +184,12 @@ class StripeServiceImpl {
 	constructEvent(payload: string, signature: string): Stripe.Event {
 		const stripe = this.getStripe();
 
-		if (!STRIPE_WEBHOOK_SECRET) {
+		if (!env.STRIPE_WEBHOOK_SECRET) {
 			throw new StripeWebhookError('STRIPE_WEBHOOK_SECRET is not configured');
 		}
 
 		try {
-			return stripe.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET);
+			return stripe.webhooks.constructEvent(payload, signature, env.STRIPE_WEBHOOK_SECRET);
 		} catch (err) {
 			throw new StripeWebhookError(
 				`Webhook signature verification failed: ${err instanceof Error ? err.message : 'Unknown error'}`
@@ -383,10 +383,10 @@ class StripeServiceImpl {
 	 */
 	private async findSubscriptionByCustomerId(customerId: string) {
 		const { createServerClient } = await import('@supabase/ssr');
-		const { PUBLIC_SUPABASE_URL } = await import('$env/static/public');
-		const { SUPABASE_SERVICE_ROLE_KEY } = await import('$env/static/private');
+		const { env: publicEnvDynamic } = await import('$env/dynamic/public');
+		const { env: envDynamic } = await import('$env/dynamic/private');
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+		const supabase = createServerClient(publicEnvDynamic.PUBLIC_SUPABASE_URL!, envDynamic.SUPABASE_SERVICE_ROLE_KEY!, {
 			cookies: {
 				getAll: () => [],
 				setAll: () => {}

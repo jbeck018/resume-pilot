@@ -2,8 +2,8 @@ import { inngest } from '../client';
 import { generateApplication, type ApplicationGenerationInput } from '$lib/server/agents/orchestrator';
 import { BudgetExceededError } from '$lib/server/llm/budget';
 import { createServerClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL } from '$env/static/public';
-import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 import { usageService } from '$lib/server/subscription';
 import { UsageLimitExceededError } from '$lib/server/subscription/errors';
 import {
@@ -26,7 +26,7 @@ export const generateResumeForJob = inngest.createFunction(
 	async ({ event, step }) => {
 		const { userId, jobId, applicationId, skipUsageCheck = false } = event.data;
 
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
 			cookies: {
 				getAll: () => [],
 				setAll: () => {}

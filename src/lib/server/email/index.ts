@@ -3,7 +3,7 @@
 
 import { Resend } from 'resend';
 import { env } from '$env/dynamic/private';
-import { PUBLIC_APP_URL } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 
 // Get API key from dynamic env (with fallback for dev)
 const RESEND_API_KEY = env.RESEND_API_KEY || '';
@@ -79,7 +79,7 @@ export interface EmailResult {
 
 // Helper to generate unsubscribe URL
 function getUnsubscribeUrl(userId: string): string {
-	return `${PUBLIC_APP_URL}/dashboard/profile?tab=notifications&userId=${userId}`;
+	return `${publicEnv.PUBLIC_APP_URL}/dashboard/profile?tab=notifications&userId=${userId}`;
 }
 
 // Helper to sleep for retry delays
@@ -163,7 +163,7 @@ export async function sendWelcomeEmail(
 ): Promise<EmailResult> {
 	const data: WelcomeEmailData = {
 		userName: userName || '',
-		dashboardUrl: `${PUBLIC_APP_URL}/dashboard`,
+		dashboardUrl: `${publicEnv.PUBLIC_APP_URL}/dashboard`,
 		unsubscribeUrl: getUnsubscribeUrl(userId)
 	};
 
@@ -193,7 +193,7 @@ export async function sendJobMatchesDigest(
 		userName,
 		jobs,
 		totalNewJobs,
-		dashboardUrl: `${PUBLIC_APP_URL}/dashboard`,
+		dashboardUrl: `${publicEnv.PUBLIC_APP_URL}/dashboard`,
 		unsubscribeUrl: getUnsubscribeUrl(userId)
 	};
 
@@ -229,7 +229,7 @@ export async function sendResumeReadyEmail(
 		company,
 		matchScore,
 		atsScore,
-		applicationUrl: `${PUBLIC_APP_URL}/dashboard/jobs/${jobId}`,
+		applicationUrl: `${publicEnv.PUBLIC_APP_URL}/dashboard/jobs/${jobId}`,
 		unsubscribeUrl: getUnsubscribeUrl(userId)
 	};
 
@@ -262,7 +262,7 @@ export async function sendWeeklySummaryEmail(
 		userName,
 		weekStartDate: formattedDate,
 		stats,
-		dashboardUrl: `${PUBLIC_APP_URL}/dashboard`,
+		dashboardUrl: `${publicEnv.PUBLIC_APP_URL}/dashboard`,
 		unsubscribeUrl: getUnsubscribeUrl(userId)
 	};
 
@@ -293,7 +293,7 @@ export async function sendApplicationStatusEmail(
 		company,
 		oldStatus,
 		newStatus,
-		applicationUrl: `${PUBLIC_APP_URL}/dashboard/jobs/${jobId}`,
+		applicationUrl: `${publicEnv.PUBLIC_APP_URL}/dashboard/jobs/${jobId}`,
 		unsubscribeUrl: getUnsubscribeUrl(userId)
 	};
 

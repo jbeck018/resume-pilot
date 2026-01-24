@@ -4,8 +4,8 @@ import { searchMuseJobs } from '$lib/server/jobs/muse';
 import { searchGreenhouseJobs } from '$lib/server/jobs/greenhouse';
 import { searchLeverJobs } from '$lib/server/jobs/lever';
 import { createServerClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL } from '$env/static/public';
-import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 import { usageService } from '$lib/server/subscription';
 import {
 	generateEmbedding,
@@ -55,7 +55,7 @@ export const dailyJobDiscovery = inngest.createFunction(
 		const { userId } = event.data;
 
 		// Create Supabase client with service role for server-side operations
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
 			cookies: {
 				getAll: () => [],
 				setAll: () => {}
@@ -571,7 +571,7 @@ export const scheduleDailyDiscovery = inngest.createFunction(
 	},
 	{ cron: '0 6 * * *' }, // Run at 6 AM UTC daily
 	async ({ step }) => {
-		const supabase = createServerClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
 			cookies: {
 				getAll: () => [],
 				setAll: () => {}
