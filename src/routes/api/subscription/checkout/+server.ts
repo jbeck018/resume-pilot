@@ -6,7 +6,7 @@
 
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { stripeService, subscriptionService } from '$lib/server/subscription';
-import { PUBLIC_APP_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = await locals.safeGetSession();
@@ -50,8 +50,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			userEmail: user.email!,
 			tierId,
 			billingInterval,
-			successUrl: `${PUBLIC_APP_URL}/dashboard/subscription?success=true`,
-			cancelUrl: `${PUBLIC_APP_URL}/pricing?canceled=true`
+			successUrl: `${env.PUBLIC_APP_URL}/dashboard/subscription?success=true`,
+			cancelUrl: `${env.PUBLIC_APP_URL}/pricing?canceled=true`
 		});
 
 		return json({ url: checkoutUrl });

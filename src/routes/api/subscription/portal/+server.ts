@@ -6,7 +6,7 @@
 
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { stripeService } from '$lib/server/subscription';
-import { PUBLIC_APP_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 
 export const POST: RequestHandler = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
@@ -23,7 +23,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 	try {
 		const portalUrl = await stripeService.createPortalSession({
 			userId: user.id,
-			returnUrl: `${PUBLIC_APP_URL}/dashboard/subscription`
+			returnUrl: `${env.PUBLIC_APP_URL}/dashboard/subscription`
 		});
 
 		return json({ url: portalUrl });
