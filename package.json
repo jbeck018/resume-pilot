@@ -58,6 +58,7 @@
     "@ai-sdk/google": "^1.1.0",
     "@ai-sdk/mcp": "^1.0.10",
     "@ai-sdk/openai": "^1.1.0",
+    "@fontsource-variable/fira-code": "^5.2.7",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.0",
