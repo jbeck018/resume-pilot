@@ -26,6 +26,7 @@ export interface Database {
 					min_salary: number | null;
 					max_salary: number | null;
 					preferred_resume_style: string;
+					role: UserRole;
 					embedding: number[] | null;
 					onboarding_completed: boolean;
 					ideal_job_description: string | null;
@@ -54,6 +55,7 @@ export interface Database {
 					min_salary?: number | null;
 					max_salary?: number | null;
 					preferred_resume_style?: string;
+					role?: UserRole;
 					embedding?: number[] | null;
 					onboarding_completed?: boolean;
 					ideal_job_description?: string | null;
@@ -82,6 +84,7 @@ export interface Database {
 					min_salary?: number | null;
 					max_salary?: number | null;
 					preferred_resume_style?: string;
+					role?: UserRole;
 					embedding?: number[] | null;
 					onboarding_completed?: boolean;
 					ideal_job_description?: string | null;
@@ -475,6 +478,129 @@ export interface Database {
 					created_at?: string;
 				};
 			};
+			invited_users: {
+				Row: {
+					id: string;
+					email: string;
+					role: UserRole;
+					token: string;
+					invited_by: string;
+					invited_by_email: string | null;
+					status: InvitationStatus;
+					expires_at: string;
+					accepted_at: string | null;
+					accepted_by: string | null;
+					created_at: string;
+					updated_at: string;
+				};
+				Insert: {
+					id?: string;
+					email: string;
+					role?: UserRole;
+					token: string;
+					invited_by: string;
+					invited_by_email?: string | null;
+					status?: InvitationStatus;
+					expires_at: string;
+					accepted_at?: string | null;
+					accepted_by?: string | null;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Update: {
+					id?: string;
+					email?: string;
+					role?: UserRole;
+					token?: string;
+					invited_by?: string;
+					invited_by_email?: string | null;
+					status?: InvitationStatus;
+					expires_at?: string;
+					accepted_at?: string | null;
+					accepted_by?: string | null;
+					created_at?: string;
+					updated_at?: string;
+				};
+			};
+			waitlist: {
+				Row: {
+					id: string;
+					email: string;
+					full_name: string | null;
+					source: string | null;
+					referral_code: string | null;
+					priority: number;
+					notes: string | null;
+					created_at: string;
+					notified_at: string | null;
+					converted_at: string | null;
+				};
+				Insert: {
+					id?: string;
+					email: string;
+					full_name?: string | null;
+					source?: string | null;
+					referral_code?: string | null;
+					priority?: number;
+					notes?: string | null;
+					created_at?: string;
+					notified_at?: string | null;
+					converted_at?: string | null;
+				};
+				Update: {
+					id?: string;
+					email?: string;
+					full_name?: string | null;
+					source?: string | null;
+					referral_code?: string | null;
+					priority?: number;
+					notes?: string | null;
+					created_at?: string;
+					notified_at?: string | null;
+					converted_at?: string | null;
+				};
+			};
+			admin_activity_log: {
+				Row: {
+					id: string;
+					admin_id: string;
+					admin_email: string | null;
+					action: AdminAction;
+					target_type: string | null;
+					target_id: string | null;
+					target_email: string | null;
+					details: AdminActivityDetails;
+					ip_address: string | null;
+					user_agent: string | null;
+					created_at: string;
+				};
+				Insert: {
+					id?: string;
+					admin_id: string;
+					admin_email?: string | null;
+					action: AdminAction;
+					target_type?: string | null;
+					target_id?: string | null;
+					target_email?: string | null;
+					details?: AdminActivityDetails;
+					ip_address?: string | null;
+					user_agent?: string | null;
+					created_at?: string;
+				};
+				Update: {
+					id?: string;
+					admin_id?: string;
+					admin_email?: string | null;
+					action?: AdminAction;
+					target_type?: string | null;
+					target_id?: string | null;
+					target_email?: string | null;
+					details?: AdminActivityDetails;
+					ip_address?: string | null;
+					user_agent?: string | null;
+					created_at?: string;
+				};
+			};
 		};
 		Views: {};
 		Functions: {
@@ -552,6 +678,48 @@ export interface Database {
 					negative_count: number;
 					last_updated: string | null;
 				}[];
+			};
+			is_admin: {
+				Args: {
+					user_id: string;
+				};
+				Returns: boolean;
+			};
+			is_root_admin: {
+				Args: {
+					user_id: string;
+				};
+				Returns: boolean;
+			};
+			get_user_role: {
+				Args: {
+					target_user_id: string;
+				};
+				Returns: UserRole;
+			};
+			is_email_invited: {
+				Args: {
+					target_email: string;
+				};
+				Returns: boolean;
+			};
+			validate_invitation_token: {
+				Args: {
+					token: string;
+				};
+				Returns: {
+					valid: boolean;
+					email: string;
+					role: UserRole;
+					invited_by_name: string | null;
+				}[];
+			};
+			accept_invitation: {
+				Args: {
+					token: string;
+					accepting_user_id: string;
+				};
+				Returns: boolean;
 			};
 		};
 		Enums: {};
@@ -676,4 +844,26 @@ export type UsageLimitResult = {
 	remaining: number;
 	tierName: string;
 	resetsAt: Date;
+};
+
+// User role types
+export type UserRole = 'user' | 'admin' | 'root_admin';
+export type InvitationStatus = 'pending' | 'accepted' | 'revoked' | 'expired';
+
+// Admin activity types
+export type AdminAction =
+	| 'invite_user'
+	| 'revoke_invitation'
+	| 'change_role'
+	| 'approve_waitlist'
+	| 'remove_waitlist'
+	| 'update_user'
+	| 'delete_user'
+	| 'system_setting_change';
+
+export type AdminActivityDetails = {
+	previousValue?: unknown;
+	newValue?: unknown;
+	reason?: string;
+	metadata?: Record<string, unknown>;
 };

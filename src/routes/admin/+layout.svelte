@@ -1,20 +1,16 @@
 <script lang="ts">
 	import { Button } from '$components/ui/button';
 	import {
-		BarChart3,
 		Briefcase,
-		CreditCard,
-		FileText,
 		Home,
 		LogOut,
 		Menu,
 		Moon,
-		Settings,
+		Shield,
 		Sun,
-		User,
-		ClipboardList,
-		X,
-		Shield
+		UserPlus,
+		Users,
+		X
 	} from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import { toggleMode, mode } from 'mode-watcher';
@@ -23,23 +19,11 @@
 
 	let mobileMenuOpen = $state(false);
 
-	const baseNavItems = [
-		{ href: '/dashboard', label: 'Dashboard', icon: Home },
-		{ href: '/dashboard/jobs', label: 'Jobs', icon: Briefcase },
-		{ href: '/dashboard/applications', label: 'Applications', icon: ClipboardList },
-		{ href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
-		{ href: '/dashboard/profile', label: 'Profile', icon: User },
-		{ href: '/dashboard/resumes', label: 'Resumes', icon: FileText },
-		{ href: '/dashboard/subscription', label: 'Subscription', icon: CreditCard },
-		{ href: '/dashboard/settings', label: 'Settings', icon: Settings }
+	const navItems = [
+		{ href: '/admin', label: 'Overview', icon: Home },
+		{ href: '/admin/invitations', label: 'Invitations', icon: UserPlus },
+		{ href: '/admin/users', label: 'Users', icon: Users }
 	];
-
-	// Add admin link if user is an admin
-	const navItems = $derived(
-		data.isAdmin
-			? [...baseNavItems, { href: '/admin', label: 'Admin', icon: Shield }]
-			: baseNavItems
-	);
 
 	function closeMobileMenu() {
 		mobileMenuOpen = false;
@@ -54,10 +38,12 @@
 
 <div class="flex min-h-screen">
 	<!-- Mobile Header -->
-	<header class="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-card px-4 md:hidden">
+	<header
+		class="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-card px-4 md:hidden"
+	>
 		<div class="flex items-center gap-2">
-			<Briefcase class="h-5 w-5" />
-			<span class="font-bold">Resume Pilot</span>
+			<Shield class="h-5 w-5 text-orange-500" />
+			<span class="font-bold">Admin Panel</span>
 		</div>
 		<Button variant="ghost" size="icon" onclick={() => (mobileMenuOpen = !mobileMenuOpen)}>
 			{#if mobileMenuOpen}
@@ -86,8 +72,8 @@
 			: '-translate-x-full'} md:block"
 	>
 		<div class="flex h-16 items-center gap-2 border-b px-6 max-md:hidden">
-			<Briefcase class="h-6 w-6" />
-			<span class="text-lg font-bold">Resume Pilot</span>
+			<Shield class="h-6 w-6 text-orange-500" />
+			<span class="text-lg font-bold">Admin Panel</span>
 		</div>
 
 		<!-- Mobile close button area -->
@@ -97,9 +83,17 @@
 			</Button>
 		</div>
 
+		{#if data.isRootAdmin}
+			<div class="mx-4 mb-2 rounded-md bg-orange-500/10 px-3 py-2 text-xs text-orange-600">
+				Root Admin
+			</div>
+		{/if}
+
 		<nav class="flex flex-col gap-1 p-4">
 			{#each navItems as item}
-				{@const isActive = $page.url.pathname === item.href || ($page.url.pathname.startsWith(item.href) && item.href !== '/dashboard')}
+				{@const isActive =
+					$page.url.pathname === item.href ||
+					($page.url.pathname.startsWith(item.href) && item.href !== '/admin')}
 				<a
 					href={item.href}
 					onclick={closeMobileMenu}
@@ -114,6 +108,14 @@
 		</nav>
 
 		<div class="absolute bottom-0 left-0 right-0 border-t p-4">
+			<a
+				href="/dashboard"
+				class="mb-2 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+			>
+				<Briefcase class="h-4 w-4" />
+				Back to Dashboard
+			</a>
+
 			<div class="mb-4 flex items-center justify-between">
 				<span class="text-sm text-muted-foreground">Theme</span>
 				<Button variant="ghost" size="icon" onclick={toggleMode}>

@@ -99,10 +99,10 @@
 		</div>
 
 		{#if matchesPercentage >= 100 || generationsPercentage >= 100}
-			<div class="rounded-lg bg-muted p-3 text-sm">
-				<p class="font-medium">Upgrade to Pro</p>
-				<p class="text-muted-foreground mt-1">Get unlimited matches and generations</p>
-			</div>
+			<a href="/dashboard/subscription" class="block rounded-lg bg-muted p-3 text-sm transition-colors hover:bg-muted/80">
+				<p class="font-medium">Want more? Pro plans coming soon!</p>
+				<p class="text-muted-foreground mt-1">Join the waitlist to get notified</p>
+			</a>
 		{/if}
 	</CardContent>
 </Card>

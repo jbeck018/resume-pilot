@@ -43,3 +43,4 @@ npm-debug.log*
 # Coverage
 coverage/
 .nyc_output/
+supabase/.temp/

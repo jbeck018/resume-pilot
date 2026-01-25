@@ -13,6 +13,12 @@ import {
 import { relations } from 'drizzle-orm';
 
 // ============================================================================
+// User Roles (defined early for use in profiles table)
+// ============================================================================
+
+export type UserRole = 'user' | 'admin' | 'root_admin';
+
+// ============================================================================
 // User Profile
 // ============================================================================
 
@@ -54,6 +60,9 @@ export const profiles = pgTable('profiles', {
 		applicationUpdates: true,
 		marketingEmails: false
 	}),
+
+	// User role (user, admin, root_admin)
+	role: varchar('role', { length: 20 }).$type<UserRole>().notNull().default('user'),
 
 	// Profile embedding for job matching (1536 dimensions for OpenAI embeddings)
 	embedding: vector('embedding', { dimensions: 1536 }),
@@ -558,3 +567,135 @@ export type SubscriptionEventType =
 	| 'tier_upgraded'
 	| 'tier_downgraded'
 	| 'usage_limit_reached';
+
+// ============================================================================
+// Invited Users
+// ============================================================================
+
+export const invitedUsers = pgTable(
+	'invited_users',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+
+		// Invitation details
+		email: varchar('email', { length: 255 }).notNull(),
+		role: varchar('role', { length: 20 }).notNull().default('user').$type<UserRole>(),
+		token: varchar('token', { length: 255 }).notNull().unique(),
+
+		// Inviter info
+		invitedBy: uuid('invited_by').notNull(), // References auth.users
+		invitedByEmail: varchar('invited_by_email', { length: 255 }),
+
+		// Status tracking
+		status: varchar('status', { length: 20 }).notNull().default('pending').$type<InvitationStatus>(),
+
+		// Timestamps
+		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+		acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+		acceptedBy: uuid('accepted_by'), // References auth.users
+
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(table) => [
+		index('invited_users_email_idx').on(table.email),
+		index('invited_users_token_idx').on(table.token),
+		index('invited_users_status_idx').on(table.status),
+		index('invited_users_invited_by_idx').on(table.invitedBy)
+	]
+);
+
+export type InvitationStatus = 'pending' | 'accepted' | 'revoked' | 'expired';
+
+// ============================================================================
+// Waitlist
+// ============================================================================
+
+export const waitlist = pgTable(
+	'waitlist',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+
+		// Contact info
+		email: varchar('email', { length: 255 }).notNull().unique(),
+		fullName: varchar('full_name', { length: 255 }),
+
+		// Source tracking
+		source: varchar('source', { length: 100 }), // 'pricing_page', 'landing_page', 'referral', etc.
+		referralCode: varchar('referral_code', { length: 100 }), // If referred by someone
+
+		// Priority for invitation (higher = more priority)
+		priority: integer('priority').notNull().default(0),
+
+		// Notes (internal use)
+		notes: text('notes'),
+
+		// Timestamps
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		notifiedAt: timestamp('notified_at', { withTimezone: true }), // When invitation was sent
+		convertedAt: timestamp('converted_at', { withTimezone: true }) // When they signed up
+	},
+	(table) => [
+		index('waitlist_email_idx').on(table.email),
+		index('waitlist_source_idx').on(table.source),
+		index('waitlist_priority_idx').on(table.priority),
+		index('waitlist_created_at_idx').on(table.createdAt)
+	]
+);
+
+// ============================================================================
+// Admin Activity Log
+// ============================================================================
+
+export const adminActivityLog = pgTable(
+	'admin_activity_log',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+
+		// Who performed the action
+		adminId: uuid('admin_id').notNull(), // References profiles.id
+		adminEmail: varchar('admin_email', { length: 255 }),
+
+		// Action details
+		action: varchar('action', { length: 100 }).notNull(),
+		// e.g., 'invite_user', 'change_role', 'approve_waitlist', 'revoke_access'
+
+		// Target of the action
+		targetType: varchar('target_type', { length: 50 }), // 'user', 'invitation', 'waitlist_entry'
+		targetId: uuid('target_id'),
+		targetEmail: varchar('target_email', { length: 255 }),
+
+		// Additional details as JSON
+		details: jsonb('details').$type<AdminActivityDetails>().default({}),
+
+		// Request context
+		ipAddress: varchar('ip_address', { length: 45 }),
+		userAgent: text('user_agent'),
+
+		// Timestamp
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(table) => [
+		index('admin_activity_admin_id_idx').on(table.adminId),
+		index('admin_activity_action_idx').on(table.action),
+		index('admin_activity_created_at_idx').on(table.createdAt),
+		index('admin_activity_target_idx').on(table.targetType, table.targetId)
+	]
+);
+
+export type AdminActivityDetails = {
+	previousValue?: unknown;
+	newValue?: unknown;
+	reason?: string;
+	metadata?: Record<string, unknown>;
+};
+
+export type AdminAction =
+	| 'invite_user'
+	| 'revoke_invitation'
+	| 'change_role'
+	| 'approve_waitlist'
+	| 'remove_waitlist'
+	| 'update_user'
+	| 'delete_user'
+	| 'system_setting_change';

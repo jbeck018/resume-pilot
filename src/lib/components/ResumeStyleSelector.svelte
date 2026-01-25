@@ -214,9 +214,9 @@
 					>
 						<div class="text-center">
 							<Crown class="mx-auto h-8 w-8 text-amber-500" />
-							<p class="mt-2 text-sm font-medium">Upgrade to unlock</p>
+							<p class="mt-2 text-sm font-medium">Premium - Coming Soon</p>
 							<Button variant="outline" size="sm" class="mt-2" href="/dashboard/subscription">
-								View Plans
+								Join Waitlist
 							</Button>
 						</div>
 					</div>

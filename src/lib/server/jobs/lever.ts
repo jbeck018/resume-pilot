@@ -1,24 +1,19 @@
 import type { JobResult, JobSearchParams } from './types';
+import { LEVER_COMPANIES, PRIORITY_ORDER, type ATSCompany } from './data/lever-companies';
 
-// List of companies known to use Lever
-// This would be expanded over time or discovered dynamically
-const LEVER_COMPANIES = [
-	{ slug: 'netflix', name: 'Netflix' },
-	{ slug: 'shopify', name: 'Shopify' },
-	{ slug: 'spotify', name: 'Spotify' },
-	{ slug: 'grammarly', name: 'Grammarly' },
-	{ slug: 'canva', name: 'Canva' },
-	{ slug: 'robinhood', name: 'Robinhood' },
-	{ slug: 'square', name: 'Square' },
-	{ slug: 'lyft', name: 'Lyft' },
-	{ slug: 'uber', name: 'Uber' },
-	{ slug: 'peloton', name: 'Peloton' },
-	{ slug: 'atlassian', name: 'Atlassian' },
-	{ slug: 'twilio', name: 'Twilio' },
-	{ slug: 'mongodb', name: 'MongoDB' },
-	{ slug: 'reddit', name: 'Reddit' },
-	{ slug: 'zoom', name: 'Zoom' }
-];
+// Configuration
+const BATCH_SIZE = 10; // Number of concurrent requests per batch
+const DELAY_BETWEEN_BATCHES_MS = 100; // Rate limiting delay
+const DEFAULT_COMPANY_LIMIT = 50; // Default number of companies to query
+const MAX_RESULTS_PER_COMPANY = 100; // Max jobs to process per company
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+
+// Simple in-memory cache for company job listings
+interface CacheEntry {
+	data: LeverJob[];
+	timestamp: number;
+}
+const jobCache = new Map<string, CacheEntry>();
 
 interface LeverJob {
 	id: string;
@@ -38,85 +33,230 @@ interface LeverResponse {
 	data?: LeverJob[];
 }
 
-export async function searchLeverJobs(params: JobSearchParams): Promise<JobResult[]> {
-	const jobs: JobResult[] = [];
+interface FetchOptions {
+	companyLimit?: number;
+	batchSize?: number;
+	delayMs?: number;
+	useCache?: boolean;
+}
 
-	// Search through known Lever companies
-	// In production, this would be optimized with caching and parallel requests
-	for (const company of LEVER_COMPANIES.slice(0, 5)) {
-		// Limit API calls
-		try {
-			const url = `https://api.lever.co/v0/postings/${company.slug}?mode=json`;
-
-			const response = await fetch(url);
-
-			if (!response.ok) {
-				// Company might not exist or API changed
-				continue;
-			}
-
-			const data: LeverJob[] | LeverResponse = await response.json();
-
-			// Handle both response formats (array or object with data property)
-			const jobsArray = Array.isArray(data) ? data : (data.data ?? []);
-
-			for (const job of jobsArray) {
-				// Filter by role keywords
-				const titleLower = job.text.toLowerCase();
-				const matchesRole =
-					params.roles.length === 0 ||
-					params.roles.some((role) => titleLower.includes(role.toLowerCase()));
-
-				if (!matchesRole) continue;
-
-				// Filter by location
-				const locationLower = job.categories?.location?.toLowerCase() || '';
-				const matchesLocation =
-					params.locations.length === 0 ||
-					params.locations.some((loc) => locationLower.includes(loc.toLowerCase()));
-
-				// Check for remote
-				const isRemote =
-					locationLower.includes('remote') ||
-					titleLower.includes('remote') ||
-					(job.descriptionPlain?.toLowerCase().includes('remote') ?? false);
-
-				if (!matchesLocation && !isRemote) continue;
-
-				// Extract requirements from description and lists
-				const description = job.descriptionPlain || '';
-				const listsContent =
-					job.lists?.map((list) => `${list.text}: ${list.content}`).join('\n') || '';
-				const fullContent = `${description}\n${listsContent}`;
-
-				const requirements = extractRequirements(fullContent);
-
-				// Determine employment type from commitment category
-				const employmentType = job.categories?.commitment || undefined;
-
-				jobs.push({
-					externalId: job.id,
-					source: 'lever',
-					sourceUrl: job.hostedUrl,
-					title: job.text,
-					company: company.name,
-					location: job.categories?.location,
-					isRemote,
-					description: job.descriptionPlain,
-					requirements,
-					employmentType,
-					postedAt: new Date(job.createdAt).toISOString()
-				});
-			}
-		} catch (error) {
-			console.error(`Error searching Lever (${company.slug}):`, error);
+/**
+ * Fetch jobs from a single Lever company
+ */
+async function fetchCompanyJobs(company: ATSCompany, useCache: boolean): Promise<LeverJob[]> {
+	// Check cache first
+	if (useCache) {
+		const cached = jobCache.get(company.slug);
+		if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+			return cached.data;
 		}
 	}
 
-	return jobs.slice(0, 20); // Limit results
+	try {
+		const url = `https://api.lever.co/v0/postings/${company.slug}?mode=json`;
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			return [];
+		}
+
+		const data: LeverJob[] | LeverResponse = await response.json();
+		const jobs = Array.isArray(data) ? data : (data.data ?? []);
+
+		// Update cache
+		if (useCache) {
+			jobCache.set(company.slug, {
+				data: jobs,
+				timestamp: Date.now()
+			});
+		}
+
+		return jobs;
+	} catch (error) {
+		console.error(`Error fetching Lever jobs for ${company.slug}:`, error);
+		return [];
+	}
 }
 
-// Simple requirement extraction from job description
+/**
+ * Fetch jobs from multiple companies in parallel batches
+ */
+async function fetchJobsInBatches(
+	companies: ATSCompany[],
+	options: FetchOptions = {}
+): Promise<Map<string, LeverJob[]>> {
+	const { batchSize = BATCH_SIZE, delayMs = DELAY_BETWEEN_BATCHES_MS, useCache = true } = options;
+
+	const results = new Map<string, LeverJob[]>();
+	const batches: ATSCompany[][] = [];
+
+	// Split companies into batches
+	for (let i = 0; i < companies.length; i += batchSize) {
+		batches.push(companies.slice(i, i + batchSize));
+	}
+
+	// Process batches sequentially, but requests within each batch run in parallel
+	for (let i = 0; i < batches.length; i++) {
+		const batch = batches[i];
+
+		// Fetch all companies in this batch in parallel
+		const batchPromises = batch.map(async (company) => {
+			const jobs = await fetchCompanyJobs(company, useCache);
+			return { company, jobs };
+		});
+
+		const batchResults = await Promise.all(batchPromises);
+
+		// Store results
+		for (const { company, jobs } of batchResults) {
+			results.set(company.slug, jobs);
+		}
+
+		// Add delay between batches (except for the last batch)
+		if (i < batches.length - 1 && delayMs > 0) {
+			await new Promise((resolve) => setTimeout(resolve, delayMs));
+		}
+	}
+
+	return results;
+}
+
+/**
+ * Get prioritized list of companies to query
+ */
+function getPrioritizedCompanies(limit: number): ATSCompany[] {
+	return [...LEVER_COMPANIES]
+		.sort((a, b) => PRIORITY_ORDER[a.priority || 'low'] - PRIORITY_ORDER[b.priority || 'low'])
+		.slice(0, limit);
+}
+
+/**
+ * Filter a job against search parameters
+ */
+function matchesSearchParams(
+	job: LeverJob,
+	params: JobSearchParams
+): { matches: boolean; isRemote: boolean } {
+	const titleLower = job.text.toLowerCase();
+	const locationLower = job.categories?.location?.toLowerCase() || '';
+	const descriptionLower = job.descriptionPlain?.toLowerCase() || '';
+
+	// Filter by role keywords
+	const matchesRole =
+		params.roles.length === 0 ||
+		params.roles.some((role) => titleLower.includes(role.toLowerCase()));
+
+	if (!matchesRole) {
+		return { matches: false, isRemote: false };
+	}
+
+	// Check for remote
+	const isRemote =
+		locationLower.includes('remote') ||
+		titleLower.includes('remote') ||
+		descriptionLower.includes('remote');
+
+	// Filter by location
+	const matchesLocation =
+		params.locations.length === 0 ||
+		params.locations.some((loc) => locationLower.includes(loc.toLowerCase()));
+
+	// Match if location matches OR job is remote
+	if (!matchesLocation && !isRemote) {
+		return { matches: false, isRemote: false };
+	}
+
+	return { matches: true, isRemote };
+}
+
+/**
+ * Convert a Lever job to JobResult format
+ */
+function convertToJobResult(job: LeverJob, companyName: string, isRemote: boolean): JobResult {
+	const description = job.descriptionPlain || '';
+	const listsContent = job.lists?.map((list) => `${list.text}: ${list.content}`).join('\n') || '';
+	const fullContent = `${description}\n${listsContent}`;
+
+	return {
+		externalId: job.id,
+		source: 'lever',
+		sourceUrl: job.hostedUrl,
+		title: job.text,
+		company: companyName,
+		location: job.categories?.location,
+		isRemote,
+		description: job.descriptionPlain,
+		requirements: extractRequirements(fullContent),
+		employmentType: job.categories?.commitment || undefined,
+		postedAt: new Date(job.createdAt).toISOString()
+	};
+}
+
+/**
+ * Search for jobs across Lever companies
+ */
+export async function searchLeverJobs(
+	params: JobSearchParams,
+	options: FetchOptions = {}
+): Promise<JobResult[]> {
+	const { companyLimit = DEFAULT_COMPANY_LIMIT } = options;
+
+	// Get prioritized companies
+	const companies = getPrioritizedCompanies(companyLimit);
+
+	// Fetch jobs from all companies in parallel batches
+	const companyJobs = await fetchJobsInBatches(companies, options);
+
+	// Process and filter jobs
+	const jobs: JobResult[] = [];
+	const companyMap = new Map(companies.map((c) => [c.slug, c]));
+
+	for (const [slug, leverJobs] of companyJobs) {
+		const company = companyMap.get(slug);
+		if (!company) continue;
+
+		// Limit jobs processed per company for performance
+		const jobsToProcess = leverJobs.slice(0, MAX_RESULTS_PER_COMPANY);
+
+		for (const job of jobsToProcess) {
+			const { matches, isRemote } = matchesSearchParams(job, params);
+
+			if (matches) {
+				jobs.push(convertToJobResult(job, company.name, isRemote));
+			}
+		}
+	}
+
+	// Sort by posted date (newest first) and limit total results
+	return jobs
+		.sort((a, b) => {
+			const dateA = a.postedAt ? new Date(a.postedAt).getTime() : 0;
+			const dateB = b.postedAt ? new Date(b.postedAt).getTime() : 0;
+			return dateB - dateA;
+		})
+		.slice(0, 100); // Increased from 20 to 100 max results
+}
+
+/**
+ * Clear the job cache (useful for testing or forcing refresh)
+ */
+export function clearLeverCache(): void {
+	jobCache.clear();
+}
+
+/**
+ * Get cache statistics
+ */
+export function getLeverCacheStats(): { size: number; companies: string[] } {
+	return {
+		size: jobCache.size,
+		companies: Array.from(jobCache.keys())
+	};
+}
+
+/**
+ * Simple requirement extraction from job description
+ */
 function extractRequirements(content: string): string[] {
 	const requirements: string[] = [];
 

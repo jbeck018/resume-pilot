@@ -16,6 +16,7 @@
 				<span class="text-xl font-bold">Resume Pilot</span>
 			</div>
 			<nav class="flex items-center gap-4">
+				<Button variant="ghost" href="/pricing">Pricing</Button>
 				<Button variant="ghost" href="/auth/login">Log in</Button>
 				<Button href="/auth/signup">Get Started</Button>
 			</nav>
