@@ -60,6 +60,7 @@
     "@ai-sdk/openai": "^1.1.0",
     "@fontsource-variable/fira-code": "^5.2.7",
     "@modelcontextprotocol/sdk": "^1.25.2",
+    "@sentry/sveltekit": "^10.36.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.0",
     "@upstash/redis": "^1.36.1",

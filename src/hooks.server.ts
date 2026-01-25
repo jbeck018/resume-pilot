@@ -1,14 +1,28 @@
 import { createServerClient } from '@supabase/ssr';
-import { type Handle, redirect } from '@sveltejs/kit';
+import { type Handle, redirect, error } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { env } from '$env/dynamic/public';
 import type { CookieSerializeOptions } from 'cookie';
 import type { Database } from '$lib/server/database/types';
+import { initSentry, captureException } from '$lib/server/sentry';
+
+// Initialize Sentry on first request
+initSentry();
 
 type CookieToSet = { name: string; value: string; options: CookieSerializeOptions };
 
 const supabase: Handle = async ({ event, resolve }) => {
-	event.locals.supabase = createServerClient<Database>(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!, {
+	// Validate required environment variables
+	if (!env.PUBLIC_SUPABASE_URL || !env.PUBLIC_SUPABASE_ANON_KEY) {
+		const missing = [];
+		if (!env.PUBLIC_SUPABASE_URL) missing.push('PUBLIC_SUPABASE_URL');
+		if (!env.PUBLIC_SUPABASE_ANON_KEY) missing.push('PUBLIC_SUPABASE_ANON_KEY');
+		console.error(`Missing required environment variables: ${missing.join(', ')}`);
+		captureException(new Error(`Missing env vars: ${missing.join(', ')}`));
+		throw error(500, `Server configuration error: Missing ${missing.join(', ')}`);
+	}
+
+	event.locals.supabase = createServerClient<Database>(env.PUBLIC_SUPABASE_URL, env.PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookiesToSet: CookieToSet[]) => {
@@ -91,3 +105,18 @@ const authGuard: Handle = async ({ event, resolve }) => {
 };
 
 export const handle: Handle = sequence(supabase, authGuard);
+
+export const handleError = (({ error, event }) => {
+	console.error('Unhandled error:', error);
+	console.error('Request URL:', event.url.pathname);
+
+	captureException(error, {
+		url: event.url.pathname,
+		method: event.request.method
+	});
+
+	return {
+		message: 'An unexpected error occurred. Please try again.',
+		code: 'INTERNAL_ERROR'
+	};
+}) satisfies import('@sveltejs/kit').HandleServerError;
