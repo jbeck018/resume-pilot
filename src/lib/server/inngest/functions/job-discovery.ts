@@ -3,6 +3,9 @@ import { searchAdzunaJobs } from '$lib/server/jobs/adzuna';
 import { searchMuseJobs } from '$lib/server/jobs/muse';
 import { searchGreenhouseJobs } from '$lib/server/jobs/greenhouse';
 import { searchLeverJobs } from '$lib/server/jobs/lever';
+import { searchRemoteOKJobs } from '$lib/server/jobs/remoteok';
+import { searchWeWorkRemotelyJobs } from '$lib/server/jobs/weworkremotely';
+import { searchJoobleJobs } from '$lib/server/jobs/jooble';
 import { createServerClient } from '@supabase/ssr';
 import { env as publicEnv } from '$env/dynamic/public';
 import { env } from '$env/dynamic/private';
@@ -130,7 +133,7 @@ export const dailyJobDiscovery = inngest.createFunction(
 				remotePreference: profile.remote_preference
 			};
 
-			const [adzunaJobs, museJobs, greenhouseJobs, leverJobs] = await Promise.all([
+			const [adzunaJobs, museJobs, greenhouseJobs, leverJobs, remoteokJobs, weworkremotelyJobs, joobleJobs] = await Promise.all([
 				searchAdzunaJobs(searchParams).catch((e) => {
 					console.error('Adzuna search failed:', e);
 					return [];
@@ -146,6 +149,21 @@ export const dailyJobDiscovery = inngest.createFunction(
 				searchLeverJobs(searchParams).catch((e) => {
 					console.error('Lever search failed:', e);
 					return [];
+				}),
+				// New sources - RemoteOK (no API key required)
+				searchRemoteOKJobs(searchParams).catch((e) => {
+					console.error('RemoteOK search failed:', e);
+					return [];
+				}),
+				// WeWorkRemotely (RSS feed, no API key required)
+				searchWeWorkRemotelyJobs(searchParams).catch((e) => {
+					console.error('WeWorkRemotely search failed:', e);
+					return [];
+				}),
+				// Jooble (requires JOOBLE_API_KEY - gracefully returns [] if not configured)
+				searchJoobleJobs(searchParams).catch((e) => {
+					console.error('Jooble search failed:', e);
+					return [];
 				})
 			]);
 
@@ -153,7 +171,10 @@ export const dailyJobDiscovery = inngest.createFunction(
 				adzuna: adzunaJobs,
 				muse: museJobs,
 				greenhouse: greenhouseJobs,
-				lever: leverJobs
+				lever: leverJobs,
+				remoteok: remoteokJobs,
+				weworkremotely: weworkremotelyJobs,
+				jooble: joobleJobs
 			};
 		});
 
@@ -163,7 +184,10 @@ export const dailyJobDiscovery = inngest.createFunction(
 				...searchResults.adzuna,
 				...searchResults.muse,
 				...searchResults.greenhouse,
-				...searchResults.lever
+				...searchResults.lever,
+				...searchResults.remoteok,
+				...searchResults.weworkremotely,
+				...searchResults.jooble
 			];
 
 			// Filter out jobs we've already seen
@@ -439,7 +463,10 @@ export const dailyJobDiscovery = inngest.createFunction(
 					searchResults.adzuna.length +
 					searchResults.muse.length +
 					searchResults.greenhouse.length +
-					searchResults.lever.length,
+					searchResults.lever.length +
+					searchResults.remoteok.length +
+					searchResults.weworkremotely.length +
+					searchResults.jooble.length,
 				jobs_new: uniqueJobs.length,
 				jobs_matched: savedJobs.saved
 			});
@@ -543,12 +570,18 @@ export const dailyJobDiscovery = inngest.createFunction(
 				searchResults.adzuna.length +
 				searchResults.muse.length +
 				searchResults.greenhouse.length +
-				searchResults.lever.length,
+				searchResults.lever.length +
+				searchResults.remoteok.length +
+				searchResults.weworkremotely.length +
+				searchResults.jooble.length,
 			bySource: {
 				adzuna: searchResults.adzuna.length,
 				muse: searchResults.muse.length,
 				greenhouse: searchResults.greenhouse.length,
-				lever: searchResults.lever.length
+				lever: searchResults.lever.length,
+				remoteok: searchResults.remoteok.length,
+				weworkremotely: searchResults.weworkremotely.length,
+				jooble: searchResults.jooble.length
 			},
 			newJobs: uniqueJobs.length,
 			savedJobs: savedJobs.saved,

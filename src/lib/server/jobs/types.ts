@@ -1,4 +1,4 @@
-export type JobSource = 'adzuna' | 'muse' | 'greenhouse' | 'lever';
+export type JobSource = 'adzuna' | 'muse' | 'greenhouse' | 'lever' | 'remoteok' | 'jooble' | 'weworkremotely';
 
 export interface JobSearchParams {
 	roles: string[];
