@@ -4,10 +4,13 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { env } from '$env/dynamic/public';
 import type { CookieSerializeOptions } from 'cookie';
 import type { Database } from '$lib/server/database/types';
-import { initSentry, captureException } from '$lib/server/sentry';
-
-// Initialize Sentry on first request
-initSentry();
+import {
+	initCloudflareSentryHandle,
+	sentryHandle,
+	handleErrorWithSentry,
+	getSentryConfig,
+	captureException
+} from '$lib/server/sentry';
 
 type CookieToSet = { name: string; value: string; options: CookieSerializeOptions };
 
@@ -104,13 +107,32 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(supabase, authGuard);
+// Build the handle sequence with Sentry if configured
+const sentryConfig = getSentryConfig();
 
-export const handleError = (({ error, event }) => {
-	console.error('Unhandled error:', error);
+// Create the handle chain - Sentry handles go first, then app handlers
+const handles: Handle[] = [];
+
+if (sentryConfig) {
+	// Initialize Sentry for Cloudflare (must be first)
+	handles.push(initCloudflareSentryHandle(sentryConfig));
+	// Add Sentry request handling for tracing
+	handles.push(sentryHandle());
+}
+
+// Add application handlers
+handles.push(supabase);
+handles.push(authGuard);
+
+export const handle: Handle = sequence(...handles);
+
+// Custom error handler that logs and reports to Sentry
+const myErrorHandler = ({ error: err, event }: { error: unknown; event: Parameters<Handle>[0]['event'] }) => {
+	console.error('Unhandled error:', err);
 	console.error('Request URL:', event.url.pathname);
 
-	captureException(error, {
+	// Manual capture with additional context
+	captureException(err, {
 		url: event.url.pathname,
 		method: event.request.method
 	});
@@ -119,4 +141,9 @@ export const handleError = (({ error, event }) => {
 		message: 'An unexpected error occurred. Please try again.',
 		code: 'INTERNAL_ERROR'
 	};
-}) satisfies import('@sveltejs/kit').HandleServerError;
+};
+
+// Wrap error handler with Sentry if configured
+export const handleError = sentryConfig
+	? handleErrorWithSentry(myErrorHandler)
+	: myErrorHandler as import('@sveltejs/kit').HandleServerError;
