@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
+import { getUserRole } from '$lib/server/auth/admin';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	const { session, user } = await locals.safeGetSession();
@@ -8,21 +9,17 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		redirect(303, '/auth/login');
 	}
 
-	// Check if user is an admin
-	const { data: profile } = await locals.supabase
-		.from('profiles')
-		.select('role')
-		.eq('user_id', user.id)
-		.single<{ role: string }>();
+	// Check if user is an admin using Drizzle (consistent with other admin routes)
+	const role = await getUserRole(user.id);
 
-	if (!profile || !['admin', 'root_admin'].includes(profile.role)) {
+	if (!role || !['admin', 'root_admin'].includes(role)) {
 		redirect(303, '/dashboard');
 	}
 
 	return {
 		session,
 		user,
-		isRootAdmin: profile.role === 'root_admin',
-		userRole: profile.role as 'admin' | 'root_admin'
+		isRootAdmin: role === 'root_admin',
+		userRole: role as 'admin' | 'root_admin'
 	};
 };

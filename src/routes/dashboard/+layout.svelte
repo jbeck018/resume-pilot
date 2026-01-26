@@ -9,7 +9,6 @@
 		LogOut,
 		Menu,
 		Moon,
-		Settings,
 		Sun,
 		User,
 		ClipboardList,
@@ -30,8 +29,7 @@
 		{ href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
 		{ href: '/dashboard/profile', label: 'Profile', icon: User },
 		{ href: '/dashboard/resumes', label: 'Resumes', icon: FileText },
-		{ href: '/dashboard/subscription', label: 'Subscription', icon: CreditCard },
-		{ href: '/dashboard/settings', label: 'Settings', icon: Settings }
+		{ href: '/dashboard/subscription', label: 'Subscription', icon: CreditCard }
 	];
 
 	// Add admin link if user is an admin
