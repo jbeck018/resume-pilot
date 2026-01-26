@@ -12,6 +12,7 @@
  */
 
 import { Redis } from '@upstash/redis';
+import { env } from '$env/dynamic/private';
 
 // Lazy initialization to prevent errors during build
 let _redis: Redis | null = null;
@@ -28,8 +29,8 @@ interface RedisConfig {
  * Get Redis configuration from environment variables
  */
 const getRedisConfig = (): RedisConfig | null => {
-	const url = process.env.UPSTASH_REDIS_REST_URL;
-	const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+	const url = env.UPSTASH_REDIS_REST_URL;
+	const token = env.UPSTASH_REDIS_REST_TOKEN;
 
 	if (url && token) {
 		return { url, token };
@@ -37,7 +38,7 @@ const getRedisConfig = (): RedisConfig | null => {
 
 	// Fallback: Check for REDIS_URL and try to parse it
 	// Note: This won't work with Cloudflare Workers, only for local development
-	const redisUrl = process.env.REDIS_URL;
+	const redisUrl = env.REDIS_URL;
 	if (redisUrl) {
 		console.warn(
 			'REDIS_URL detected but Upstash credentials not found. ' +

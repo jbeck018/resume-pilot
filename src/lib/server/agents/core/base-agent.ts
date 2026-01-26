@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { Langfuse } from 'langfuse';
+import { env } from '$env/dynamic/private';
 import type {
 	AgentConfig,
 	AgentContext,
@@ -47,15 +48,15 @@ export abstract class BaseAgent<TInput, TOutput> {
 	protected getLangfuse(): Langfuse | null {
 		if (this.langfuse) return this.langfuse;
 
-		const publicKey = process.env.LANGFUSE_PUBLIC_KEY;
-		const secretKey = process.env.LANGFUSE_SECRET_KEY;
+		const publicKey = env.LANGFUSE_PUBLIC_KEY;
+		const secretKey = env.LANGFUSE_SECRET_KEY;
 
 		if (!publicKey || !secretKey) return null;
 
 		this.langfuse = new Langfuse({
 			publicKey,
 			secretKey,
-			baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+			baseUrl: env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
 		});
 
 		return this.langfuse;

@@ -69,7 +69,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, params, locals, url }) => {
+	acceptInvite: async ({ request, params, locals, url }) => {
 		const { token } = params;
 		const formData = await request.formData();
 		const password = formData.get('password') as string;

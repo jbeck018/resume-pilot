@@ -1,13 +1,14 @@
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
+import { env } from '$env/dynamic/private';
 
 // Lazy initialization for database connection
 // Prevents errors during build when env vars aren't available
 let _db: PostgresJsDatabase<typeof schema> | null = null;
 
 const getDatabaseUrl = (): string => {
-	const dbUrl = process.env.SUPABASE_DB_URL;
+	const dbUrl = env.SUPABASE_DB_URL;
 
 	if (dbUrl) {
 		return dbUrl;

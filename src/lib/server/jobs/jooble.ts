@@ -1,4 +1,5 @@
 import type { JobResult, JobSearchParams } from './types';
+import { env } from '$env/dynamic/private';
 
 /**
  * Jooble Job Search API Integration
@@ -12,7 +13,7 @@ import type { JobResult, JobSearchParams } from './types';
  * - JOOBLE_API_KEY: Your Jooble API key (free tier available with generous limits)
  */
 
-const JOOBLE_API_KEY = process.env.JOOBLE_API_KEY;
+const JOOBLE_API_KEY = env.JOOBLE_API_KEY;
 const JOOBLE_BASE_URL = 'https://jooble.org/api';
 
 interface JoobleJob {

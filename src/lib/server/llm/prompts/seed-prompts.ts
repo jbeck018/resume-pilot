@@ -4,11 +4,12 @@
 // Run with: npx tsx src/lib/server/llm/prompts/seed-prompts.ts
 
 import { Langfuse } from 'langfuse';
+import { env } from '$env/dynamic/private';
 
 const langfuse = new Langfuse({
-	publicKey: process.env.LANGFUSE_PUBLIC_KEY!,
-	secretKey: process.env.LANGFUSE_SECRET_KEY!,
-	baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+	publicKey: env.LANGFUSE_PUBLIC_KEY!,
+	secretKey: env.LANGFUSE_SECRET_KEY!,
+	baseUrl: env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
 });
 
 // -----------------------------------------------------------------------------

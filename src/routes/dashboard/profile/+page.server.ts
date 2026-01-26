@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals: { supabase, user } }) => {
+	updateProfile: async ({ request, locals: { supabase, user } }) => {
 		if (!user) {
 			return fail(401, { error: 'Unauthorized' });
 		}

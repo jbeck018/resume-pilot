@@ -115,6 +115,7 @@
 
 	<form
 		method="POST"
+		action="?/updateProfile"
 		use:enhance={() => {
 			loading = true;
 			return async ({ update }) => {

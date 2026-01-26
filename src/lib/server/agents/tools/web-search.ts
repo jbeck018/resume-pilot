@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { ToolDefinition, ToolContext, ToolResult, CompanyResearch } from '../types';
+import { env } from '$env/dynamic/private';
 import { complete } from '../../llm/client';
 
 export interface WebSearchInput {
@@ -114,21 +115,21 @@ interface SearchResponse {
  */
 async function performSearch(input: WebSearchInput): Promise<SearchResponse> {
 	// Check if Perplexity API is configured
-	const perplexityKey = process.env.PERPLEXITY_API_KEY;
+	const perplexityKey = env.PERPLEXITY_API_KEY;
 
 	if (perplexityKey) {
 		return { results: await searchWithPerplexity(input, perplexityKey), isPlaceholder: false };
 	}
 
 	// Check if Tavily API is configured
-	const tavilyKey = process.env.TAVILY_API_KEY;
+	const tavilyKey = env.TAVILY_API_KEY;
 
 	if (tavilyKey) {
 		return { results: await searchWithTavily(input, tavilyKey), isPlaceholder: false };
 	}
 
 	// In production, log a warning - search APIs should be configured
-	const isProduction = process.env.NODE_ENV === 'production';
+	const isProduction = env.NODE_ENV === 'production';
 	if (isProduction) {
 		console.warn(
 			'[WebSearch] WARNING: No search API keys configured (PERPLEXITY_API_KEY or TAVILY_API_KEY). ' +

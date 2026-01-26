@@ -6,8 +6,8 @@ import { env as publicEnv } from '$env/dynamic/public';
 import { env } from '$env/dynamic/private';
 import type { Database } from '$lib/server/database/types';
 
-// OpenAI API configuration
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// OpenAI API configuration - accessed via env already imported
+const OPENAI_API_KEY = env.OPENAI_API_KEY;
 const OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small';
 const EMBEDDING_DIMENSIONS = 1536;
 

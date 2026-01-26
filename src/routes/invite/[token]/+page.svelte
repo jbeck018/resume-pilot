@@ -87,6 +87,7 @@
 
 				<form
 					method="POST"
+					action="?/acceptInvite"
 					use:enhance={() => {
 						loading = true;
 						return async ({ update }) => {

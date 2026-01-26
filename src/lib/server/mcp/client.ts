@@ -5,14 +5,15 @@
 // Supports both stdio and HTTP transports with connection pooling.
 
 import { experimental_createMCPClient as createMCPClient, type MCPTransport } from 'ai';
+import { env } from '$env/dynamic/private';
 
 // Note: StdioMCPTransport is dynamically imported only when needed to avoid
 // bundling child_process which doesn't work in Cloudflare Workers
 
 // Environment configuration
-const CLAUDE_FLOW_MCP_URL = process.env.CLAUDE_FLOW_MCP_URL || 'http://localhost:3001';
-const CLAUDE_FLOW_ENABLED = process.env.CLAUDE_FLOW_ENABLED === 'true';
-const CLAUDE_FLOW_TRANSPORT = process.env.CLAUDE_FLOW_TRANSPORT || 'stdio'; // 'stdio' | 'http'
+const CLAUDE_FLOW_MCP_URL = env.CLAUDE_FLOW_MCP_URL || 'http://localhost:3001';
+const CLAUDE_FLOW_ENABLED = env.CLAUDE_FLOW_ENABLED === 'true';
+const CLAUDE_FLOW_TRANSPORT = env.CLAUDE_FLOW_TRANSPORT || 'stdio'; // 'stdio' | 'http'
 
 // -----------------------------------------------------------------------------
 // Types

@@ -1,9 +1,10 @@
 import { Inngest } from 'inngest';
+import { env } from '$env/dynamic/private';
 
 // Create the Inngest client
 export const inngest = new Inngest({
 	id: 'resume-pilot',
-	eventKey: process.env.INNGEST_EVENT_KEY
+	eventKey: env.INNGEST_EVENT_KEY
 });
 
 // Define event types for type safety

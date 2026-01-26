@@ -6,15 +6,16 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { Langfuse } from 'langfuse';
+import { env } from '$env/dynamic/private';
 
 // Environment variables
-const CLOUDFLARE_AI_GATEWAY_URL = process.env.CLOUDFLARE_AI_GATEWAY_URL; // e.g., https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_name}
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-const LANGFUSE_PUBLIC_KEY = process.env.LANGFUSE_PUBLIC_KEY;
-const LANGFUSE_SECRET_KEY = process.env.LANGFUSE_SECRET_KEY;
-const LANGFUSE_HOST = process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com';
+const CLOUDFLARE_AI_GATEWAY_URL = env.CLOUDFLARE_AI_GATEWAY_URL; // e.g., https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_name}
+const ANTHROPIC_API_KEY = env.ANTHROPIC_API_KEY;
+const OPENAI_API_KEY = env.OPENAI_API_KEY;
+const GOOGLE_API_KEY = env.GOOGLE_API_KEY;
+const LANGFUSE_PUBLIC_KEY = env.LANGFUSE_PUBLIC_KEY;
+const LANGFUSE_SECRET_KEY = env.LANGFUSE_SECRET_KEY;
+const LANGFUSE_HOST = env.LANGFUSE_HOST || 'https://cloud.langfuse.com';
 
 // Initialize Langfuse for observability (lazy initialization)
 let langfuseInstance: Langfuse | null = null;

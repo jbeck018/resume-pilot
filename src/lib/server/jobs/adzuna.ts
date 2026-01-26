@@ -1,7 +1,8 @@
 import type { JobResult, JobSearchParams } from './types';
+import { env } from '$env/dynamic/private';
 
-const ADZUNA_APP_ID = process.env.ADZUNA_APP_ID;
-const ADZUNA_APP_KEY = process.env.ADZUNA_APP_KEY;
+const ADZUNA_APP_ID = env.ADZUNA_APP_ID;
+const ADZUNA_APP_KEY = env.ADZUNA_APP_KEY;
 const ADZUNA_BASE_URL = 'https://api.adzuna.com/v1/api/jobs';
 
 interface AdzunaJob {
