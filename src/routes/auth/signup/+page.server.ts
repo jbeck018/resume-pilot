@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals: { supabase }, url }) => {
+	signup: async ({ request, locals: { supabase }, url }) => {
 		const formData = await request.formData();
 		const email = formData.get('email') as string;
 		const password = formData.get('password') as string;

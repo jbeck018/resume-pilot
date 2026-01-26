@@ -21,6 +21,60 @@
       "storedAt": "2026-01-20T00:56:02.883Z",
       "accessCount": 0,
       "lastAccessed": "2026-01-20T00:56:02.883Z"
+    },
+    "sentry-cloudflare-sveltekit-docs": {
+      "key": "sentry-cloudflare-sveltekit-docs",
+      "value": {
+        "summary": "Sentry integration for SvelteKit on Cloudflare Pages",
+        "package": "@sentry/sveltekit",
+        "requires": {
+          "sveltekit": ">=2.31.0",
+          "sentry": ">=10.8.0"
+        },
+        "hooks_server_ts": {
+          "imports": [
+            "initCloudflareSentryHandle",
+            "sentryHandle",
+            "handleErrorWithSentry"
+          ],
+          "handle_sequence": "sequence(initCloudflareSentryHandle({dsn, ...}), sentryHandle(), ...appHandlers)",
+          "handleError": "handleErrorWithSentry(customHandler)"
+        },
+        "wrangler_toml": {
+          "compatibility_flags": [
+            "nodejs_compat",
+            "nodejs_als"
+          ],
+          "version_metadata": {
+            "binding": "CF_VERSION_METADATA"
+          }
+        },
+        "vite_plugin": {
+          "note": "sentrySvelteKit plugin causes OOM on large projects",
+          "recommendation": "Skip the Vite plugin, use only runtime integration via hooks",
+          "autoInstrument": {
+            "load": false,
+            "serverLoad": false
+          }
+        },
+        "important": [
+          "Delete instrumentation.server.ts if it exists - not compatible with Cloudflare",
+          "Sentry DSN should be in PUBLIC_SENTRY_DSN env var",
+          "The Vite plugin's auto-instrumentation doesn't work on Cloudflare Workers"
+        ],
+        "sources": [
+          "https://docs.sentry.io/platforms/javascript/guides/cloudflare/frameworks/sveltekit/",
+          "https://github.com/getsentry/sentry-javascript/issues/18541"
+        ]
+      },
+      "metadata": {
+        "type": "documentation",
+        "category": "sentry",
+        "platform": "cloudflare-sveltekit"
+      },
+      "storedAt": "2026-01-26T00:03:09.497Z",
+      "accessCount": 0,
+      "lastAccessed": "2026-01-26T00:03:09.497Z"
     }
   },
   "version": "3.0.0"
