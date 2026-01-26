@@ -16,6 +16,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:run": "npx tsx scripts/run-migration.ts",
     "inngest:dev": "npx inngest-cli@latest dev",
     "prompts:seed": "npx tsx src/lib/server/llm/prompts/seed-prompts.ts",
     "docker:dev": "docker-compose up -d",
