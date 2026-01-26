@@ -1,4 +1,5 @@
 import { serve } from 'inngest/sveltekit';
+import { env } from '$env/dynamic/private';
 import {
 	inngest,
 	dailyJobDiscovery,
@@ -9,6 +10,8 @@ import {
 } from '$lib/server/inngest';
 
 // Serve the Inngest API endpoint
+// Note: signingKey must be passed explicitly for Cloudflare Workers
+// because process.env is not available
 const handler = serve({
 	client: inngest,
 	functions: [
@@ -17,7 +20,8 @@ const handler = serve({
 		generateResumeForJob,
 		parseResumeFile,
 		sendWeeklySummaries
-	]
+	],
+	signingKey: env.INNGEST_SIGNING_KEY
 });
 
 export const GET = handler.GET;
