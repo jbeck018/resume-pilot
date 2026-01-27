@@ -1,5 +1,5 @@
 {
-  "name": "resume-pilot",
+  "name": "howlerhire",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -26,8 +26,8 @@
     "docker:prod": "docker-compose -f docker-compose.prod.yml up -d",
     "docker:prod:build": "docker-compose -f docker-compose.prod.yml up -d --build",
     "docker:prod:down": "docker-compose -f docker-compose.prod.yml down",
-    "docker:build": "docker build -t resume-pilot:latest .",
-    "docker:run": "docker run -p 3000:3000 --env-file .env resume-pilot:latest"
+    "docker:build": "docker build -t howlerhire:latest .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env howlerhire:latest"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^5.0.0",

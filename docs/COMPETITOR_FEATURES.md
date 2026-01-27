@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the competitor features that have been implemented in Resume Pilot to match and exceed the capabilities of leading platforms like Teal, Careerflow, and Huntr.
+This document outlines the competitor features that have been implemented in HowlerHire to match and exceed the capabilities of leading platforms like Teal, Careerflow, and Huntr.
 
 ## Implemented Features
 
@@ -85,7 +85,7 @@ Visual analysis showing the alignment between user skills and job requirements.
 
 ### Feature Comparison Matrix
 
-| Feature | Resume Pilot | Teal | Careerflow | Huntr | Jobscan |
+| Feature | HowlerHire | Teal | Careerflow | Huntr | Jobscan |
 |---------|--------------|------|------------|-------|---------|
 | Application Tracking | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Kanban Board View | ✅ | ✅ | ✅ | ✅ | ❌ |
@@ -103,7 +103,7 @@ Visual analysis showing the alignment between user skills and job requirements.
 
 ### Unique Advantages
 
-Resume Pilot now offers several features that competitors don't have in combination:
+HowlerHire now offers several features that competitors don't have in combination:
 
 1. **Automated Resume Generation + Tracking**: Most tools only track applications; we generate tailored resumes too
 2. **Comprehensive Scoring**: Combined match score, ATS score, and skills gap in one view
@@ -318,7 +318,7 @@ analytics.track('skills_gap_viewed', {
 
 ## Conclusion
 
-With these competitor features implemented, Resume Pilot now offers a comprehensive job search management platform that rivals established players while maintaining its unique value proposition of automated, AI-powered resume generation.
+With these competitor features implemented, HowlerHire now offers a comprehensive job search management platform that rivals established players while maintaining its unique value proposition of automated, AI-powered resume generation.
 
 **Key Differentiators**:
 1. Combines tracking with automated resume generation

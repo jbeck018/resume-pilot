@@ -1,11 +1,11 @@
 #!/bin/bash
 # =============================================================================
-# setup-env.sh - Interactive environment setup for Resume Pilot
+# setup-env.sh - Interactive environment setup for HowlerHire
 # =============================================================================
 # Usage: ./scripts/setup-env.sh
 #
 # This script helps you configure the .env file with all required and optional
-# environment variables for the Resume Pilot application.
+# environment variables for the HowlerHire application.
 #
 # Make executable: chmod +x scripts/setup-env.sh
 # =============================================================================
@@ -60,7 +60,7 @@ print_section() {
 show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
-    echo "Interactive setup for Resume Pilot environment variables"
+    echo "Interactive setup for HowlerHire environment variables"
     echo ""
     echo "Options:"
     echo "  --force        Overwrite existing .env file"
@@ -158,7 +158,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-print_header "Resume Pilot - Environment Setup"
+print_header "HowlerHire - Environment Setup"
 
 # -----------------------------------------------------------------------------
 # Check for existing .env file

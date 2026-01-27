@@ -1,5 +1,5 @@
 # Cloudflare Pages configuration
-name = "resume-pilot"
+name = "howlerhire"
 compatibility_date = "2024-09-23"
 # nodejs_compat provides broader Node.js API compatibility
 # nodejs_als is required by Sentry for AsyncLocalStorage

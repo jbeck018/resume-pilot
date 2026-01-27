@@ -1,7 +1,7 @@
 /**
  * Auth Module
  *
- * Exports authentication and authorization utilities for the resume-pilot app.
+ * Exports authentication and authorization utilities for the HowlerHire app.
  */
 
 export {

@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign Up - Resume Pilot</title>
+	<title>Sign Up - HowlerHire</title>
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center p-4">

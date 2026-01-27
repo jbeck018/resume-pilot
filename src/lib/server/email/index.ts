@@ -1,4 +1,4 @@
-// Email service for Resume Pilot using Resend API
+// Email service for HowlerHire using Resend API
 // Handles all email notifications with retry logic and error handling
 
 import { Resend } from 'resend';
@@ -34,8 +34,8 @@ function getResendClient(): Resend {
 }
 
 // Email configuration
-const FROM_EMAIL = 'Resume Pilot <notifications@resumepilot.app>';
-const REPLY_TO = 'support@resumepilot.app';
+const FROM_EMAIL = 'HowlerHire <notifications@howlerhire.com>';
+const REPLY_TO = 'support@howlerhire.com';
 
 // Retry configuration
 const MAX_RETRIES = 3;
@@ -169,7 +169,7 @@ export async function sendWelcomeEmail(
 
 	const html = welcomeEmail(data);
 
-	return sendEmailWithRetry(to, 'Welcome to Resume Pilot!', html, [
+	return sendEmailWithRetry(to, 'Welcome to HowlerHire!', html, [
 		{ name: 'category', value: 'welcome' },
 		{ name: 'userId', value: userId }
 	]);

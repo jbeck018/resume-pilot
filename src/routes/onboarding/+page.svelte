@@ -60,14 +60,14 @@
 </script>
 
 <svelte:head>
-	<title>Get Started - Resume Pilot</title>
+	<title>Get Started - HowlerHire</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12">
 	<div class="container max-w-4xl mx-auto px-4">
 		<!-- Header -->
 		<div class="text-center mb-8">
-			<h1 class="text-4xl font-bold mb-2">Welcome to Resume Pilot</h1>
+			<h1 class="text-4xl font-bold mb-2">Welcome to HowlerHire</h1>
 			<p class="text-muted-foreground text-lg">Let's get your job hunt on autopilot in just a few steps</p>
 		</div>
 

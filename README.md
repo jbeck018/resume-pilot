@@ -1,4 +1,4 @@
-# Resume Pilot
+# HowlerHire
 
 AI-powered job search and resume optimization application. Automatically finds matching jobs, generates tailored resumes and cover letters, and tracks your applications.
 
@@ -35,7 +35,7 @@ AI-powered job search and resume optimization application. Automatically finds m
 
 ```bash
 git clone <repo-url>
-cd resume-pilot
+cd howlerhire
 npm install
 ```
 
@@ -110,7 +110,7 @@ Then set `LITELLM_PROXY_URL=http://localhost:4000` in your `.env`.
 ## Project Structure
 
 ```
-resume-pilot/
+howlerhire/
 ├── src/
 │   ├── lib/
 │   │   ├── components/ui/     # shadcn-svelte components

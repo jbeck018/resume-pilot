@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# deploy-cloudflare.sh - Deploy Resume Pilot to Cloudflare Pages
+# deploy-cloudflare.sh - Deploy HowlerHire to Cloudflare Pages
 # =============================================================================
 # Usage: ./scripts/deploy-cloudflare.sh [--preview|--production]
 #
@@ -55,7 +55,7 @@ print_header() {
 show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
-    echo "Deploy Resume Pilot to Cloudflare Pages"
+    echo "Deploy HowlerHire to Cloudflare Pages"
     echo ""
     echo "Options:"
     echo "  --preview      Deploy to preview environment (default)"
@@ -113,7 +113,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-print_header "Resume Pilot - Cloudflare Pages Deployment"
+print_header "HowlerHire - Cloudflare Pages Deployment"
 print_status "Environment: $ENVIRONMENT"
 print_status "Project root: $PROJECT_ROOT"
 
@@ -232,10 +232,10 @@ if [ "$ENVIRONMENT" = "production" ]; then
     fi
 
     # Production deployment
-    DEPLOY_OUTPUT=$(wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch main 2>&1)
+    DEPLOY_OUTPUT=$(wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch main 2>&1)
 else
     # Preview deployment
-    DEPLOY_OUTPUT=$(wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot 2>&1)
+    DEPLOY_OUTPUT=$(wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire 2>&1)
 fi
 
 echo "$DEPLOY_OUTPUT"

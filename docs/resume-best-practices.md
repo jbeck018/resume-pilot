@@ -1,6 +1,6 @@
 # Resume and Cover Letter Best Practices Guide
 
-> Research compiled for Resume Pilot - January 2025
+> Research compiled for HowlerHire - January 2025
 >
 > Sources: Industry surveys, recruiter insights, ATS vendor documentation, and hiring manager studies from 2024-2025
 
@@ -669,4 +669,4 @@ QUALITY
 ---
 
 *Last updated: January 2025*
-*For Resume Pilot internal use*
+*For HowlerHire internal use*

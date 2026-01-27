@@ -18,7 +18,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard - Resume Pilot</title>
+	<title>Dashboard - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-8">

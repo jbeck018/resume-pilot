@@ -1,5 +1,5 @@
 # =============================================================================
-# Resume Pilot - Makefile
+# HowlerHire - Makefile
 # =============================================================================
 # A SvelteKit application with Cloudflare, Supabase, Inngest, and Stripe
 #
@@ -15,7 +15,7 @@
 SHELL := /bin/bash
 
 # Project settings
-PROJECT_NAME := resume-pilot
+PROJECT_NAME := howlerhire
 NODE_VERSION := 20
 
 # Colors for output

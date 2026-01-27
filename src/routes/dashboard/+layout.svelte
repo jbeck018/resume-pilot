@@ -55,7 +55,7 @@
 	<header class="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-card px-4 md:hidden">
 		<div class="flex items-center gap-2">
 			<Briefcase class="h-5 w-5" />
-			<span class="font-bold">Resume Pilot</span>
+			<span class="font-bold">HowlerHire</span>
 		</div>
 		<Button variant="ghost" size="icon" onclick={() => (mobileMenuOpen = !mobileMenuOpen)}>
 			{#if mobileMenuOpen}
@@ -85,7 +85,7 @@
 	>
 		<div class="flex h-16 items-center gap-2 border-b px-6 max-md:hidden">
 			<Briefcase class="h-6 w-6" />
-			<span class="text-lg font-bold">Resume Pilot</span>
+			<span class="text-lg font-bold">HowlerHire</span>
 		</div>
 
 		<!-- Mobile close button area -->

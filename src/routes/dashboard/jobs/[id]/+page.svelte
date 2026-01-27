@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.job?.title} - Resume Pilot</title>
+	<title>{data.job?.title} - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-6">

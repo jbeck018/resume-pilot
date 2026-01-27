@@ -76,7 +76,7 @@
 </script>
 
 <svelte:head>
-	<title>Subscription - Resume Pilot</title>
+	<title>Subscription - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-8">

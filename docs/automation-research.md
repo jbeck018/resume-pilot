@@ -1,4 +1,4 @@
-# Resume Pilot: Automation Capabilities Research
+# HowlerHire: Automation Capabilities Research
 
 This document provides comprehensive research on automation capabilities for job application workflows, including auto-apply mechanisms, email integration, calendar scheduling, and related features.
 
@@ -530,7 +530,7 @@ Next steps:
 Application tracking link: [Dashboard Link]
 
 Good luck!
-Resume Pilot
+HowlerHire
 ```
 
 ### Follow-Up Email (1 Week)
@@ -767,7 +767,7 @@ interface LinkedInDataExport {
     'Connections'
   ];
 
-  useCase: 'User manually exports and uploads to Resume Pilot';
+  useCase: 'User manually exports and uploads to HowlerHire';
   automation: 'None - user-initiated only';
 }
 ```
@@ -780,13 +780,13 @@ interface ManualProfileImport {
   workflow: [
     '1. User visits their LinkedIn profile',
     '2. User copies relevant sections',
-    '3. User pastes into Resume Pilot form',
+    '3. User pastes into HowlerHire form',
     '4. AI assists with formatting and optimization'
   ];
 
   alternative: [
     '1. User downloads LinkedIn data export',
-    '2. User uploads ZIP to Resume Pilot',
+    '2. User uploads ZIP to HowlerHire',
     '3. System parses CSV files',
     '4. Auto-populates profile fields'
   ];

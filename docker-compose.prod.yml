@@ -1,5 +1,5 @@
 # =============================================================================
-# Resume Pilot - Production Docker Compose Configuration
+# HowlerHire - Production Docker Compose Configuration
 # =============================================================================
 # Production-ready configuration with security hardening and resource limits
 #
@@ -24,16 +24,16 @@ version: '3.8'
 # Named Networks
 # -----------------------------------------------------------------------------
 networks:
-  resume-pilot-prod:
+  howlerhire-prod:
     driver: bridge
-    name: resume-pilot-prod
+    name: howlerhire-prod
 
 # -----------------------------------------------------------------------------
 # Named Volumes
 # -----------------------------------------------------------------------------
 volumes:
   redis_data:
-    name: resume-pilot-prod-redis
+    name: howlerhire-prod-redis
 
 # -----------------------------------------------------------------------------
 # Services
@@ -49,8 +49,8 @@ services:
       # Build arguments for production
       args:
         - NODE_ENV=production
-    image: resume-pilot:${VERSION:-latest}
-    container_name: resume-pilot-app-prod
+    image: howlerhire:${VERSION:-latest}
+    container_name: howlerhire-app-prod
     ports:
       - "3000:3000"
     environment:
@@ -98,13 +98,13 @@ services:
         labels: "service,environment"
         tag: "{{.Name}}/{{.ID}}"
     labels:
-      - "service=resume-pilot-app"
+      - "service=howlerhire-app"
       - "environment=production"
     depends_on:
       redis:
         condition: service_healthy
     networks:
-      - resume-pilot-prod
+      - howlerhire-prod
     # Don't restart automatically in prod - use orchestrator
     restart: unless-stopped
 
@@ -113,7 +113,7 @@ services:
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: resume-pilot-redis-prod
+    container_name: howlerhire-redis-prod
     ports:
       - "127.0.0.1:6379:6379"  # Only bind to localhost
     volumes:
@@ -149,7 +149,7 @@ services:
         max-size: "5m"
         max-file: "3"
     networks:
-      - resume-pilot-prod
+      - howlerhire-prod
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ services:
   #
   # nginx:
   #   image: nginx:alpine
-  #   container_name: resume-pilot-nginx
+  #   container_name: howlerhire-nginx
   #   ports:
   #     - "80:80"
   #     - "443:443"
@@ -177,5 +177,5 @@ services:
   #   depends_on:
   #     - app
   #   networks:
-  #     - resume-pilot-prod
+  #     - howlerhire-prod
   #   restart: unless-stopped

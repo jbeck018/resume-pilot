@@ -61,7 +61,7 @@
 </script>
 
 <svelte:head>
-	<title>Analytics - Resume Pilot</title>
+	<title>Analytics - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-8">

@@ -92,7 +92,7 @@
 </script>
 
 <svelte:head>
-	<title>Pricing - Resume Pilot</title>
+	<title>Pricing - HowlerHire</title>
 </svelte:head>
 
 <div class="min-h-screen bg-background">
@@ -102,7 +102,7 @@
 			<div class="flex items-center gap-2">
 				<a href="/" class="flex items-center gap-2">
 					<Briefcase class="h-6 w-6" />
-					<span class="text-xl font-bold">Resume Pilot</span>
+					<span class="text-xl font-bold">HowlerHire</span>
 				</a>
 			</div>
 			<nav class="flex items-center gap-4">
@@ -213,14 +213,14 @@
 				<div>
 					<h3 class="font-semibold">Will there be a free tier?</h3>
 					<p class="mt-2 text-muted-foreground">
-						Yes! We'll always have a free tier so you can try Resume Pilot before committing to a
+						Yes! We'll always have a free tier so you can try HowlerHire before committing to a
 						paid plan.
 					</p>
 				</div>
 				<div>
-					<h3 class="font-semibold">Can I use Resume Pilot now?</h3>
+					<h3 class="font-semibold">Can I use HowlerHire now?</h3>
 					<p class="mt-2 text-muted-foreground">
-						Absolutely! You can sign up and use Resume Pilot with our free tier limits today. No
+						Absolutely! You can sign up and use HowlerHire with our free tier limits today. No
 						credit card required.
 					</p>
 				</div>
@@ -231,7 +231,7 @@
 	<!-- Footer -->
 	<footer class="border-t py-8">
 		<div class="container text-center text-sm text-muted-foreground">
-			<p>&copy; 2024 Resume Pilot. Built with AI.</p>
+			<p>&copy; 2024 HowlerHire. Built with AI.</p>
 		</div>
 	</footer>
 </div>

@@ -1,5 +1,5 @@
 # =============================================================================
-# Resume Pilot - Docker Compose Configuration
+# HowlerHire - Docker Compose Configuration
 # =============================================================================
 # Local development services with all dependencies
 #
@@ -25,22 +25,22 @@ version: '3.8'
 # Named Networks
 # -----------------------------------------------------------------------------
 networks:
-  resume-pilot-network:
+  howlerhire-network:
     driver: bridge
-    name: resume-pilot-network
+    name: howlerhire-network
 
 # -----------------------------------------------------------------------------
 # Named Volumes for Data Persistence
 # -----------------------------------------------------------------------------
 volumes:
   postgres_data:
-    name: resume-pilot-postgres-data
+    name: howlerhire-postgres-data
   redis_data:
-    name: resume-pilot-redis-data
+    name: howlerhire-redis-data
   litellm_data:
-    name: resume-pilot-litellm-data
+    name: howlerhire-litellm-data
   claude_flow_data:
-    name: resume-pilot-claude-flow-data
+    name: howlerhire-claude-flow-data
 
 # -----------------------------------------------------------------------------
 # Services
@@ -53,7 +53,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: resume-pilot-app
+    container_name: howlerhire-app
     ports:
       - "5173:5173"           # Vite dev server
     environment:
@@ -61,7 +61,7 @@ services:
       - HOST=0.0.0.0
       - PORT=5173
       # Database - use local PostgreSQL instead of Supabase for dev
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/resume_pilot
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/howlerhire
       # Inngest - point to local dev server
       - INNGEST_DEV=1
       - INNGEST_DEV_SERVER_URL=http://inngest:8288
@@ -86,7 +86,7 @@ services:
       inngest:
         condition: service_started
     networks:
-      - resume-pilot-network
+      - howlerhire-network
     # Allow connecting to host services (e.g., Supabase CLI)
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -99,13 +99,13 @@ services:
   # Useful for offline development or CI/CD testing
   postgres:
     image: postgres:16-alpine
-    container_name: resume-pilot-postgres
+    container_name: howlerhire-postgres
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: resume_pilot
+      POSTGRES_DB: howlerhire
       # Improve performance for development
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
@@ -113,13 +113,13 @@ services:
       # Mount init scripts (optional)
       - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d resume_pilot"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d howlerhire"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     networks:
-      - resume-pilot-network
+      - howlerhire-network
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -128,7 +128,7 @@ services:
   # Used for session storage, caching, and rate limiting
   redis:
     image: redis:7-alpine
-    container_name: resume-pilot-redis
+    container_name: howlerhire-redis
     ports:
       - "6379:6379"
     volumes:
@@ -140,7 +140,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - resume-pilot-network
+      - howlerhire-network
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -149,7 +149,7 @@ services:
   # Background job processing for resume generation, job discovery, etc.
   inngest:
     image: inngest/inngest:latest
-    container_name: resume-pilot-inngest
+    container_name: howlerhire-inngest
     ports:
       - "8288:8288"           # Inngest UI and API
     environment:
@@ -158,7 +158,7 @@ services:
     # Using host.docker.internal to reach the app on the host
     command: inngest dev -u http://app:5173/api/inngest --no-discovery
     networks:
-      - resume-pilot-network
+      - howlerhire-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -169,7 +169,7 @@ services:
   # Multi-provider LLM access with caching and rate limiting
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
-    container_name: resume-pilot-litellm
+    container_name: howlerhire-litellm
     ports:
       - "4000:4000"
     environment:
@@ -188,7 +188,7 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - resume-pilot-network
+      - howlerhire-network
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -197,7 +197,7 @@ services:
   # Pattern learning and swarm coordination for AI development
   claude-flow:
     image: node:20-alpine
-    container_name: resume-pilot-claude-flow
+    container_name: howlerhire-claude-flow
     working_dir: /app
     ports:
       - "3001:3001"
@@ -219,5 +219,5 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - resume-pilot-network
+      - howlerhire-network
     restart: unless-stopped

@@ -1,5 +1,5 @@
 # =============================================================================
-# Resume Pilot - Development Dockerfile
+# HowlerHire - Development Dockerfile
 # =============================================================================
 # Development image with hot reload support
 #
@@ -7,8 +7,8 @@
 #   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 #
 # Standalone usage:
-#   docker build -f Dockerfile.dev -t resume-pilot:dev .
-#   docker run -p 5173:5173 -v $(pwd):/app -v /app/node_modules resume-pilot:dev
+#   docker build -f Dockerfile.dev -t howlerhire:dev .
+#   docker run -p 5173:5173 -v $(pwd):/app -v /app/node_modules howlerhire:dev
 # =============================================================================
 
 FROM node:20-alpine

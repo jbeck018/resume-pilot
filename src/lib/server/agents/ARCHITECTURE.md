@@ -1,14 +1,14 @@
-# Agentic Flow Architecture for Resume Pilot
+# Agentic Flow Architecture for HowlerHire
 
 ## Overview
 
-This document describes the multi-agent architecture for Resume Pilot, enabling intelligent resume tailoring, cover letter generation, job matching, and profile enhancement through composable AI agents.
+This document describes the multi-agent architecture for HowlerHire, enabling intelligent resume tailoring, cover letter generation, job matching, and profile enhancement through composable AI agents.
 
 ## Architecture Diagram
 
 ```
 +-----------------------------------------------------------------------------------+
-|                              RESUME PILOT AGENTIC SYSTEM                          |
+|                              HOWLERHIRE AGENTIC SYSTEM                          |
 +-----------------------------------------------------------------------------------+
                                         |
                     +-------------------v-------------------+

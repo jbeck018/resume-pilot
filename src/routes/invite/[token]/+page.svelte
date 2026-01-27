@@ -12,7 +12,7 @@
 </script>
 
 <svelte:head>
-	<title>Accept Invitation - Resume Pilot</title>
+	<title>Accept Invitation - HowlerHire</title>
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center p-4">
@@ -22,7 +22,7 @@
 				<Briefcase class="h-6 w-6 text-primary-foreground" />
 			</div>
 			<CardTitle class="text-2xl">You're Invited!</CardTitle>
-			<CardDescription>Create your Resume Pilot account</CardDescription>
+			<CardDescription>Create your HowlerHire account</CardDescription>
 		</CardHeader>
 		<CardContent>
 			{#if !data.valid}

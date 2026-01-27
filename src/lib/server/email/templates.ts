@@ -1,4 +1,4 @@
-// Email templates for Resume Pilot
+// Email templates for HowlerHire
 // All templates are responsive HTML with inline styles for email client compatibility
 
 export interface EmailTemplateData {
@@ -51,7 +51,7 @@ export function baseTemplate(data: EmailTemplateData): string {
           <tr>
             <td style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 32px; text-align: center;">
               <h1 class="header-logo" style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
-                Resume Pilot
+                HowlerHire
               </h1>
             </td>
           </tr>
@@ -80,7 +80,7 @@ export function baseTemplate(data: EmailTemplateData): string {
             <td style="background-color: #f9fafb; padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
               ${footer || ''}
               <p style="margin: 16px 0 0 0; font-size: 12px; color: #9ca3af;">
-                Resume Pilot - AI-Powered Job Search
+                HowlerHire - AI-Powered Job Search
               </p>
             </td>
           </tr>
@@ -104,15 +104,15 @@ export function welcomeEmail(data: WelcomeEmailData): string {
 	const { userName, dashboardUrl, unsubscribeUrl } = data;
 
 	return baseTemplate({
-		preheader: 'Welcome to Resume Pilot! Your AI-powered job search starts now.',
-		title: 'Welcome to Resume Pilot',
+		preheader: 'Welcome to HowlerHire! Your AI-powered job search starts now.',
+		title: 'Welcome to HowlerHire',
 		content: `
       <h2 style="margin: 0 0 24px 0; color: #18181b; font-size: 28px; font-weight: 700;">
         Welcome${userName ? `, ${userName}` : ''}!
       </h2>
 
       <p style="margin: 0 0 20px 0; color: #3f3f46; font-size: 16px;">
-        You're all set to supercharge your job search with AI-powered resume tailoring. Here's what Resume Pilot can do for you:
+        You're all set to supercharge your job search with AI-powered resume tailoring. Here's what HowlerHire can do for you:
       </p>
 
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">

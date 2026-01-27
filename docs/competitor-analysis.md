@@ -1,4 +1,4 @@
-# Resume Pilot - Competitor Analysis
+# HowlerHire - Competitor Analysis
 
 *Research conducted: January 2025*
 
@@ -412,9 +412,9 @@ No tool effectively tracks actual outcomes (interviews, offers) correlated with 
 
 ---
 
-## Differentiators for Resume Pilot
+## Differentiators for HowlerHire
 
-Based on the competitive analysis and market gaps, Resume Pilot can differentiate through:
+Based on the competitive analysis and market gaps, HowlerHire can differentiate through:
 
 ### 1. Intelligent Job Discovery Pipeline
 Unlike manual job boards, build an automated discovery system that:

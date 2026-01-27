@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# health-check.sh - Health check for Resume Pilot deployment
+# health-check.sh - Health check for HowlerHire deployment
 # =============================================================================
 # Usage: ./scripts/health-check.sh [URL]
 #
@@ -56,7 +56,7 @@ print_header() {
 show_help() {
     echo "Usage: $0 [OPTIONS] [URL]"
     echo ""
-    echo "Run health checks on Resume Pilot deployment"
+    echo "Run health checks on HowlerHire deployment"
     echo ""
     echo "Arguments:"
     echo "  URL            Base URL to check (default: from .env or localhost:5173)"
@@ -75,7 +75,7 @@ show_help() {
     echo ""
     echo "Examples:"
     echo "  $0                                    # Check local dev server"
-    echo "  $0 https://resume-pilot.pages.dev    # Check deployed app"
+    echo "  $0 https://howlerhire.pages.dev    # Check deployed app"
     echo "  $0 --verbose --timeout 30            # Verbose with longer timeout"
 }
 
@@ -380,7 +380,7 @@ check_supabase_api() {
 # -----------------------------------------------------------------------------
 
 if [ "$JSON_OUTPUT" = false ]; then
-    print_header "Resume Pilot Health Check"
+    print_header "HowlerHire Health Check"
     print_status "Target: $BASE_URL"
     print_status "Timeout: ${TIMEOUT}s"
     echo ""

@@ -1,8 +1,8 @@
 #!/bin/bash
 # =============================================================================
-# Resume-Pilot Migration Runner
+# HowlerHire Migration Runner
 # =============================================================================
-# This script safely executes database migrations for resume-pilot deployment.
+# This script safely executes database migrations for howlerhire deployment.
 #
 # Usage:
 #   ./scripts/run-migrations.sh [--verify-only] [--specific 0009,0010]
@@ -65,7 +65,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo -e "${BLUE}================================================${NC}"
-echo -e "${BLUE}  Resume-Pilot Database Migration Runner${NC}"
+echo -e "${BLUE}  HowlerHire Database Migration Runner${NC}"
 echo -e "${BLUE}================================================${NC}"
 echo ""
 

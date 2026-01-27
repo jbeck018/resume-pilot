@@ -56,7 +56,7 @@
 </script>
 
 <svelte:head>
-	<title>Admin Dashboard - Resume Pilot</title>
+	<title>Admin Dashboard - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-8">

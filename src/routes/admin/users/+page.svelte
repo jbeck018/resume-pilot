@@ -84,7 +84,7 @@
 </script>
 
 <svelte:head>
-	<title>Users - Admin - Resume Pilot</title>
+	<title>Users - Admin - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-6">

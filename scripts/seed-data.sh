@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# seed-data.sh - Seed initial data for Resume Pilot
+# seed-data.sh - Seed initial data for HowlerHire
 # =============================================================================
 # Usage: ./scripts/seed-data.sh
 #
@@ -56,7 +56,7 @@ print_header() {
 show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
-    echo "Seed initial data for Resume Pilot"
+    echo "Seed initial data for HowlerHire"
     echo ""
     echo "Options:"
     echo "  --dry-run      Show SQL without executing"
@@ -104,7 +104,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-print_header "Resume Pilot - Database Seeding"
+print_header "HowlerHire - Database Seeding"
 
 # Load .env file
 if [ ! -f ".env" ]; then

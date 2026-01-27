@@ -1,6 +1,6 @@
-# Cloudflare Pages Deployment Guide - Resume Pilot
+# Cloudflare Pages Deployment Guide - HowlerHire
 
-This guide provides step-by-step instructions for deploying Resume Pilot to Cloudflare Pages.
+This guide provides step-by-step instructions for deploying HowlerHire to Cloudflare Pages.
 
 ## Table of Contents
 
@@ -64,10 +64,10 @@ You have two options for creating a Pages project:
 
 ```bash
 # Navigate to your project directory
-cd /Users/jacob/projects/resume-pilot
+cd /Users/jacob/projects/howlerhire
 
 # Create the Pages project
-wrangler pages project create resume-pilot
+wrangler pages project create howlerhire
 ```
 
 When prompted:
@@ -79,7 +79,7 @@ When prompted:
 2. Select your account
 3. Navigate to **Workers & Pages** > **Create application** > **Pages**
 4. Select **Connect to Git** or **Direct Upload**
-5. Name your project `resume-pilot`
+5. Name your project `howlerhire`
 6. Set production branch to `main`
 
 ---
@@ -88,7 +88,7 @@ When prompted:
 
 ### Required Environment Variables
 
-Set these in the Cloudflare Dashboard under **Workers & Pages** > **resume-pilot** > **Settings** > **Environment variables**:
+Set these in the Cloudflare Dashboard under **Workers & Pages** > **howlerhire** > **Settings** > **Environment variables**:
 
 #### Supabase (Required)
 
@@ -139,7 +139,7 @@ Set these in the Cloudflare Dashboard under **Workers & Pages** > **resume-pilot
 
 | Variable | Type | Description |
 |----------|------|-------------|
-| `PUBLIC_APP_URL` | Plain text | Your production URL (e.g., `https://resume-pilot.pages.dev`) |
+| `PUBLIC_APP_URL` | Plain text | Your production URL (e.g., `https://howlerhire.pages.dev`) |
 
 #### Optional: Observability
 
@@ -154,18 +154,18 @@ Set these in the Cloudflare Dashboard under **Workers & Pages** > **resume-pilot
 
 ```bash
 # Set a plain text variable
-wrangler pages secret put PUBLIC_SUPABASE_URL --project-name resume-pilot
+wrangler pages secret put PUBLIC_SUPABASE_URL --project-name howlerhire
 
 # Set an encrypted secret
-wrangler pages secret put SUPABASE_SERVICE_ROLE_KEY --project-name resume-pilot
+wrangler pages secret put SUPABASE_SERVICE_ROLE_KEY --project-name howlerhire
 
 # List all secrets
-wrangler pages secret list --project-name resume-pilot
+wrangler pages secret list --project-name howlerhire
 ```
 
 ### Setting Environment Variables via Dashboard
 
-1. Go to **Workers & Pages** > **resume-pilot**
+1. Go to **Workers & Pages** > **howlerhire**
 2. Click **Settings** > **Environment variables**
 3. Click **Add variable**
 4. Select **Production** and/or **Preview** environment
@@ -199,7 +199,7 @@ This creates the build output in `.svelte-kit/cloudflare/`.
 
 ```bash
 # Deploy to production
-wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch main
+wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch main
 ```
 
 Expected output:
@@ -207,12 +207,12 @@ Expected output:
 Uploading... (X/X)
 ✨ Successfully published your Worker
 ✨ Deployment complete! Your site is live at:
-https://resume-pilot.pages.dev
+https://howlerhire.pages.dev
 ```
 
 ### Step 3: Verify Deployment
 
-1. Visit your Pages URL: `https://resume-pilot.pages.dev`
+1. Visit your Pages URL: `https://howlerhire.pages.dev`
 2. Test authentication flow
 3. Navigate through the dashboard
 4. Check browser console for errors
@@ -237,7 +237,7 @@ npm run check
 npm run build
 
 # Deploy
-wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch main
+wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch main
 ```
 
 ### One-Line Deployment
@@ -247,8 +247,8 @@ Add this to your `package.json` scripts:
 ```json
 {
   "scripts": {
-    "deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch main",
-    "deploy:preview": "npm run build && wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch preview"
+    "deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch main",
+    "deploy:preview": "npm run build && wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch preview"
   }
 }
 ```
@@ -265,16 +265,16 @@ Deploy a preview version for testing:
 
 ```bash
 # Deploy to a preview URL (non-production)
-wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch feature-branch
+wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch feature-branch
 
-# This creates a URL like: https://feature-branch.resume-pilot.pages.dev
+# This creates a URL like: https://feature-branch.howlerhire.pages.dev
 ```
 
 ### Git Integration (Automatic Deployments)
 
 For automatic deployments on push:
 
-1. Go to **Workers & Pages** > **resume-pilot** > **Settings** > **Builds & deployments**
+1. Go to **Workers & Pages** > **howlerhire** > **Settings** > **Builds & deployments**
 2. Click **Connect to Git**
 3. Select your repository
 4. Configure:
@@ -292,7 +292,7 @@ Now every push to `main` automatically deploys.
 ### Step 1: Add Custom Domain
 
 Via Dashboard:
-1. Go to **Workers & Pages** > **resume-pilot**
+1. Go to **Workers & Pages** > **howlerhire**
 2. Click **Custom domains** > **Set up a custom domain**
 3. Enter your domain (e.g., `app.yourcompany.com`)
 4. Click **Activate domain**
@@ -300,7 +300,7 @@ Via Dashboard:
 Via CLI:
 ```bash
 # Add custom domain
-wrangler pages project add-custom-domain resume-pilot --domain app.yourcompany.com
+wrangler pages project add-custom-domain howlerhire --domain app.yourcompany.com
 ```
 
 ### Step 2: Configure DNS
@@ -309,7 +309,7 @@ If your domain is managed by Cloudflare:
 - DNS records are automatically configured
 
 If your domain is external:
-1. Add a CNAME record pointing to `resume-pilot.pages.dev`
+1. Add a CNAME record pointing to `howlerhire.pages.dev`
 2. Or follow the provided DNS instructions
 
 ### Step 3: SSL/TLS
@@ -328,18 +328,18 @@ To verify:
 
 ```bash
 # List recent deployments
-wrangler pages deployment list --project-name resume-pilot
+wrangler pages deployment list --project-name howlerhire
 ```
 
 Via Dashboard:
-1. Go to **Workers & Pages** > **resume-pilot**
+1. Go to **Workers & Pages** > **howlerhire**
 2. Click **Deployments**
 3. View all deployments with timestamps
 
 ### Rollback to Previous Deployment
 
 Via Dashboard (Recommended):
-1. Go to **Workers & Pages** > **resume-pilot** > **Deployments**
+1. Go to **Workers & Pages** > **howlerhire** > **Deployments**
 2. Find the deployment you want to restore
 3. Click the three-dot menu (...)
 4. Select **Rollback to this deployment**
@@ -348,7 +348,7 @@ Via Dashboard (Recommended):
 Via CLI:
 ```bash
 # Get deployment ID from list
-wrangler pages deployment list --project-name resume-pilot
+wrangler pages deployment list --project-name howlerhire
 
 # Rollback is done by redeploying the old version
 # First, checkout the old commit
@@ -356,7 +356,7 @@ git checkout <previous-commit-hash>
 
 # Build and deploy
 npm run build
-wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch main
+wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch main
 
 # Return to main branch
 git checkout main
@@ -393,7 +393,7 @@ npm install
 npm run build
 
 # Deploy
-wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch main
+wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch main
 
 # Return to original branch
 git checkout $CURRENT_BRANCH
@@ -480,17 +480,17 @@ Error: Script size exceeds limit
 
 ```bash
 # Stream real-time logs
-wrangler pages deployment tail --project-name resume-pilot
+wrangler pages deployment tail --project-name howlerhire
 
 # View logs in dashboard
-# Workers & Pages > resume-pilot > Deployments > [deployment] > Logs
+# Workers & Pages > howlerhire > Deployments > [deployment] > Logs
 ```
 
 ### Checking Deployment Status
 
 ```bash
 # List all deployments with status
-wrangler pages deployment list --project-name resume-pilot
+wrangler pages deployment list --project-name howlerhire
 ```
 
 ---
@@ -505,28 +505,28 @@ npm install -g wrangler
 wrangler login
 
 # Create project
-wrangler pages project create resume-pilot
+wrangler pages project create howlerhire
 
 # Build
 npm run build
 
 # Deploy to production
-wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch main
+wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch main
 
 # Deploy preview
-wrangler pages deploy .svelte-kit/cloudflare --project-name resume-pilot --branch preview
+wrangler pages deploy .svelte-kit/cloudflare --project-name howlerhire --branch preview
 
 # Set secret
-wrangler pages secret put SECRET_NAME --project-name resume-pilot
+wrangler pages secret put SECRET_NAME --project-name howlerhire
 
 # List secrets
-wrangler pages secret list --project-name resume-pilot
+wrangler pages secret list --project-name howlerhire
 
 # View deployments
-wrangler pages deployment list --project-name resume-pilot
+wrangler pages deployment list --project-name howlerhire
 
 # Stream logs
-wrangler pages deployment tail --project-name resume-pilot
+wrangler pages deployment tail --project-name howlerhire
 
 # Check auth
 wrangler whoami

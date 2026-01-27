@@ -5,7 +5,7 @@ import { env } from '$env/dynamic/private';
 // Note: isDev must be explicitly set to false for Cloudflare Workers
 // because the SDK cannot auto-detect the production environment
 export const inngest = new Inngest({
-	id: 'resume-pilot',
+	id: 'howlerhire',
 	eventKey: env.INNGEST_EVENT_KEY,
 	isDev: false
 });

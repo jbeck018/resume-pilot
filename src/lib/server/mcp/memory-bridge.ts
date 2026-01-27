@@ -106,7 +106,7 @@ export async function storePattern(pattern: GenerationPattern): Promise<boolean>
 		}, { success: boolean }>('memory_store', {
 			key: `pattern:${pattern.type}:${pattern.id}`,
 			value: JSON.stringify(pattern),
-			namespace: 'resume-pilot-patterns',
+			namespace: 'howlerhire-patterns',
 			metadata: {
 				type: pattern.type,
 				industry: pattern.industry,
@@ -158,7 +158,7 @@ export async function findSimilarPatterns(
 			}>;
 		}>('memory_search', {
 			query: buildSearchQuery(jobDescription, { type, industry }),
-			namespace: 'resume-pilot-patterns',
+			namespace: 'howlerhire-patterns',
 			limit,
 			threshold: minScore
 		});
@@ -215,7 +215,7 @@ export async function getPatternsByType(
 				metadata?: Record<string, unknown>;
 			}>;
 		}>('memory_list', {
-			namespace: 'resume-pilot-patterns',
+			namespace: 'howlerhire-patterns',
 			limit: filters?.limit || 50
 		});
 
@@ -267,7 +267,7 @@ export async function storeAgentExecution(record: AgentExecutionRecord): Promise
 		}, { success: boolean }>('memory_store', {
 			key: `execution:${record.agentType}:${record.executionId}`,
 			value: JSON.stringify(record),
-			namespace: 'resume-pilot-executions',
+			namespace: 'howlerhire-executions',
 			metadata: {
 				agentType: record.agentType,
 				success: record.success,
@@ -314,7 +314,7 @@ export async function getAgentStats(
 				metadata?: Record<string, unknown>;
 			}>;
 		}>('memory_list', {
-			namespace: 'resume-pilot-executions',
+			namespace: 'howlerhire-executions',
 			limit: 100
 		});
 

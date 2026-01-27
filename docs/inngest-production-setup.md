@@ -1,6 +1,6 @@
 # Inngest Production Setup Guide
 
-This guide covers deploying Resume Pilot's background job system powered by Inngest.
+This guide covers deploying HowlerHire's background job system powered by Inngest.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ This guide covers deploying Resume Pilot's background job system powered by Inng
 
 ## Overview
 
-Resume Pilot uses [Inngest](https://www.inngest.com/) for:
+HowlerHire uses [Inngest](https://www.inngest.com/) for:
 
 - **Background job processing** - Resume generation, parsing, and job discovery
 - **Scheduled tasks** - Daily job discovery and weekly summary emails
@@ -24,7 +24,7 @@ Resume Pilot uses [Inngest](https://www.inngest.com/) for:
 
 **Endpoint:** `/api/inngest` (SvelteKit API route)
 
-**Client ID:** `resume-pilot`
+**Client ID:** `howlerhire`
 
 ---
 
@@ -193,7 +193,7 @@ INNGEST_SIGNING_KEY=signkey-prod-xxxxxxxx
 
 ### Step 4: Deploy Your Application
 
-Deploy Resume Pilot to your production host. The `/api/inngest` endpoint will be available at:
+Deploy HowlerHire to your production host. The `/api/inngest` endpoint will be available at:
 
 ```
 https://your-domain.com/api/inngest
@@ -439,7 +439,7 @@ Inngest pricing is based on function runs:
 - **Free tier:** 25,000 runs/month
 - **Pro tier:** Starting at $25/month for more runs
 
-For Resume Pilot:
+For HowlerHire:
 - Each user's daily job discovery = 1 run (+ N resume generations)
 - Each resume generation = 1 run
 - Each resume parse = 1 run

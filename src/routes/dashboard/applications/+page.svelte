@@ -92,7 +92,7 @@
 </script>
 
 <svelte:head>
-	<title>Applications - Resume Pilot</title>
+	<title>Applications - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-6">

@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>Resume Pilot - AI-Powered Job Search</title>
+	<title>HowlerHire - AI-Powered Job Search</title>
 </svelte:head>
 
 <div class="flex min-h-screen flex-col">
@@ -13,7 +13,7 @@
 		<div class="container flex h-16 items-center justify-between">
 			<div class="flex items-center gap-2">
 				<Briefcase class="h-6 w-6" />
-				<span class="text-xl font-bold">Resume Pilot</span>
+				<span class="text-xl font-bold">HowlerHire</span>
 			</div>
 			<nav class="flex items-center gap-4">
 				<Button variant="ghost" href="/pricing">Pricing</Button>
@@ -96,7 +96,7 @@
 	<!-- Footer -->
 	<footer class="border-t py-8">
 		<div class="container text-center text-sm text-muted-foreground">
-			<p>&copy; 2024 Resume Pilot. Built with AI.</p>
+			<p>&copy; 2024 HowlerHire. Built with AI.</p>
 		</div>
 	</footer>
 </div>

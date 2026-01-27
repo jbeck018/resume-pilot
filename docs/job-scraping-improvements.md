@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive analysis of job API options, web scraping services, ATS integrations, and smart scraping features to improve Resume Pilot's job discovery capabilities. The current implementation supports Adzuna, The Muse, Greenhouse, and Lever. This research identifies additional sources and optimization strategies.
+This document provides a comprehensive analysis of job API options, web scraping services, ATS integrations, and smart scraping features to improve HowlerHire's job discovery capabilities. The current implementation supports Adzuna, The Muse, Greenhouse, and Lever. This research identifies additional sources and optimization strategies.
 
 ---
 

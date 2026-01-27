@@ -1,10 +1,10 @@
 # =============================================================================
-# Resume Pilot - Production Dockerfile
+# HowlerHire - Production Dockerfile
 # =============================================================================
 # Multi-stage build for optimized production image
 #
-# Build: docker build -t resume-pilot:latest .
-# Run:   docker run -p 3000:3000 --env-file .env resume-pilot:latest
+# Build: docker build -t howlerhire:latest .
+# Run:   docker run -p 3000:3000 --env-file .env howlerhire:latest
 # =============================================================================
 
 # -----------------------------------------------------------------------------

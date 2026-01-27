@@ -2,13 +2,13 @@
 
 **Date:** January 2026
 **Auditor:** AI Research Agent
-**Scope:** All LLM prompts in Resume Pilot that generate user-facing resume and cover letter content
+**Scope:** All LLM prompts in HowlerHire that generate user-facing resume and cover letter content
 
 ---
 
 ## Executive Summary
 
-This audit evaluates the truthfulness safeguards in Resume Pilot's AI prompts to ensure generated resumes and cover letters are based solely on real user information, never fabricated. While the codebase includes some anti-fabrication language, there are significant gaps that could lead to hallucinated content appearing in user documents.
+This audit evaluates the truthfulness safeguards in HowlerHire's AI prompts to ensure generated resumes and cover letters are based solely on real user information, never fabricated. While the codebase includes some anti-fabrication language, there are significant gaps that could lead to hallucinated content appearing in user documents.
 
 ### Overall Risk Assessment: **MEDIUM-HIGH**
 

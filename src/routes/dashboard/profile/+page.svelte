@@ -104,7 +104,7 @@
 </script>
 
 <svelte:head>
-	<title>Profile - Resume Pilot</title>
+	<title>Profile - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-6">

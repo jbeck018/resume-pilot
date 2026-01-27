@@ -556,8 +556,8 @@ async function generateResume(jobDescription: string, userProfile: Profile) {
    - Log into Cloudflare dashboard
    - Navigate to AI → AI Gateway
    - Click "Create Gateway"
-   - Name: `resume-pilot-gateway`
-   - Copy gateway URL: `https://gateway.ai.cloudflare.com/v1/{account_id}/resume-pilot-gateway`
+   - Name: `howlerhire-gateway`
+   - Copy gateway URL: `https://gateway.ai.cloudflare.com/v1/{account_id}/howlerhire-gateway`
 
 2. **Configure Providers**
    - Add OpenAI configuration
@@ -572,7 +572,7 @@ async function generateResume(jobDescription: string, userProfile: Profile) {
    ```bash
    # Add to .env
    AI_GATEWAY_ACCOUNT_ID=your_account_id
-   AI_GATEWAY_ID=resume-pilot-gateway
+   AI_GATEWAY_ID=howlerhire-gateway
    AI_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1/${AI_GATEWAY_ACCOUNT_ID}/${AI_GATEWAY_ID}
    ```
 
@@ -747,19 +747,19 @@ async function generateResume(jobDescription: string, userProfile: Profile) {
 1. **Test Each Provider**
    ```bash
    # Test Claude
-   curl -X POST https://gateway.ai.cloudflare.com/v1/{account}/resume-pilot-gateway/anthropic/v1/messages \
+   curl -X POST https://gateway.ai.cloudflare.com/v1/{account}/howlerhire-gateway/anthropic/v1/messages \
      -H "Authorization: Bearer $ANTHROPIC_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{"model": "claude-3-5-sonnet-20241022", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 100}'
 
    # Test OpenAI
-   curl -X POST https://gateway.ai.cloudflare.com/v1/{account}/resume-pilot-gateway/openai/v1/chat/completions \
+   curl -X POST https://gateway.ai.cloudflare.com/v1/{account}/howlerhire-gateway/openai/v1/chat/completions \
      -H "Authorization: Bearer $OPENAI_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{"model": "gpt-4o", "messages": [{"role": "user", "content": "Hello"}]}'
 
    # Test Google
-   curl -X POST https://gateway.ai.cloudflare.com/v1/{account}/resume-pilot-gateway/google-ai-studio/v1beta/models/gemini-1.5-pro:generateContent \
+   curl -X POST https://gateway.ai.cloudflare.com/v1/{account}/howlerhire-gateway/google-ai-studio/v1beta/models/gemini-1.5-pro:generateContent \
      -H "Authorization: Bearer $GOOGLE_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{"contents": [{"parts": [{"text": "Hello"}]}]}'

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# Resume Pilot - Deploy Secrets to Cloudflare Pages
+# HowlerHire - Deploy Secrets to Cloudflare Pages
 # =============================================================================
 # Usage:
 #   ./scripts/deploy-secrets.sh [env-file] [project-name]
@@ -16,7 +16,7 @@ set -e
 
 # Configuration
 ENV_FILE="${1:-.env.production}"
-PROJECT_NAME="${2:-resume-pilot}"
+PROJECT_NAME="${2:-howlerhire}"
 
 # Colors
 RED='\033[0;31m'
@@ -26,7 +26,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║     Resume Pilot - Cloudflare Secrets Deployment          ║${NC}"
+echo -e "${BLUE}║     HowlerHire - Cloudflare Secrets Deployment            ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

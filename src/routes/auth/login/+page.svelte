@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>Log In - Resume Pilot</title>
+	<title>Log In - HowlerHire</title>
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center p-4">
@@ -21,7 +21,7 @@
 				<Briefcase class="h-6 w-6 text-primary-foreground" />
 			</div>
 			<CardTitle class="text-2xl">Welcome back</CardTitle>
-			<CardDescription>Sign in to your Resume Pilot account</CardDescription>
+			<CardDescription>Sign in to your HowlerHire account</CardDescription>
 		</CardHeader>
 		<CardContent>
 			<form

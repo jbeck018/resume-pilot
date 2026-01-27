@@ -149,7 +149,7 @@
 </script>
 
 <svelte:head>
-	<title>Resumes - Resume Pilot</title>
+	<title>Resumes - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-6">

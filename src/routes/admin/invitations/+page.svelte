@@ -158,7 +158,7 @@
 </script>
 
 <svelte:head>
-	<title>Invitations - Admin - Resume Pilot</title>
+	<title>Invitations - Admin - HowlerHire</title>
 </svelte:head>
 
 <div class="space-y-6">

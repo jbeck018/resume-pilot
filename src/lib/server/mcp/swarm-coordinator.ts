@@ -107,7 +107,7 @@ export async function initializeSwarm(config: Partial<SwarmConfig> = {}): Promis
 			strategy: effectiveConfig.strategy,
 			config: {
 				consensusAlgorithm: effectiveConfig.consensusAlgorithm,
-				purpose: 'resume-pilot'
+				purpose: 'howlerhire'
 			}
 		});
 
@@ -472,8 +472,8 @@ export async function spawnSpecializedAgents(
 				agentId?: string;
 			}>('agent_spawn', {
 				agentType,
-				agentId: `resume-pilot-${task}-${i + 1}`,
-				task: `Resume Pilot ${task} agent`,
+				agentId: `howlerhire-${task}-${i + 1}`,
+				task: `HowlerHire ${task} agent`,
 				model: 'haiku' // Use fast/cheap model for most tasks
 			});
 
@@ -530,7 +530,7 @@ export async function broadcastToAgents(
 		}, { success: boolean }>('hive-mind_broadcast', {
 			message,
 			priority,
-			fromId: 'resume-pilot-orchestrator'
+			fromId: 'howlerhire-orchestrator'
 		});
 
 		return result?.success ?? false;
@@ -558,7 +558,7 @@ export async function storeInHiveMemory(
 			value?: unknown;
 		}, { success: boolean }>('hive-mind_memory', {
 			action: 'set',
-			key: `resume-pilot:${key}`,
+			key: `howlerhire:${key}`,
 			value
 		});
 
@@ -583,7 +583,7 @@ export async function retrieveFromHiveMemory<T>(key: string): Promise<T | null> 
 			key?: string;
 		}, { success: boolean; value?: T }>('hive-mind_memory', {
 			action: 'get',
-			key: `resume-pilot:${key}`
+			key: `howlerhire:${key}`
 		});
 
 		return result?.value ?? null;
