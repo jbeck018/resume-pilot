@@ -6,7 +6,8 @@ import {
 	scheduleDailyDiscovery,
 	generateResumeForJob,
 	parseResumeFile,
-	sendWeeklySummaries
+	sendWeeklySummaries,
+	syncProfileFromGitHub
 } from '$lib/server/inngest';
 
 // Serve the Inngest API endpoint
@@ -19,7 +20,8 @@ const handler = serve({
 		scheduleDailyDiscovery,
 		generateResumeForJob,
 		parseResumeFile,
-		sendWeeklySummaries
+		sendWeeklySummaries,
+		syncProfileFromGitHub
 	],
 	signingKey: env.INNGEST_SIGNING_KEY
 });

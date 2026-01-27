@@ -141,12 +141,15 @@ export const actions: Actions = {
 			? portfolioUrls.split('\n').filter(url => url.trim())
 			: [];
 
+		// Extract GitHub handle from URL
+		const githubHandle = githubUrl ? githubUrl.replace(/https?:\/\/(www\.)?github\.com\//i, '').replace(/\/$/, '') : null;
+
 		type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 		const { error } = await supabase
 			.from('profiles')
 			.update({
 				linkedin_url: linkedinUrl || null,
-				github_handle: githubUrl ? githubUrl.replace(/https?:\/\/(www\.)?github\.com\//i, '') : null,
+				github_handle: githubHandle,
 				portfolio_urls: portfolioArray,
 				updated_at: new Date().toISOString()
 			})
@@ -155,6 +158,22 @@ export const actions: Actions = {
 		if (error) {
 			console.error('Profile update error:', error);
 			return fail(500, { error: 'Failed to update profile' });
+		}
+
+		// Trigger GitHub profile sync if handle provided
+		if (githubHandle) {
+			try {
+				await inngest.send({
+					name: 'profile/sync.requested',
+					data: {
+						userId: user.id,
+						githubHandle
+					}
+				});
+			} catch (error) {
+				console.error('Failed to trigger GitHub sync:', error);
+				// Don't fail - the profile is saved, sync can happen later
+			}
 		}
 
 		return { success: true, step: 2 };

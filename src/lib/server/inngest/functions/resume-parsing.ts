@@ -176,64 +176,77 @@ Important:
 			}
 		});
 
-		// Step 5: Update user profile with extracted skills (if not already set)
-		if (structuredData.skills && structuredData.skills.length > 0) {
-			await step.run('update-profile-skills', async () => {
-				// Get current profile
-				const { data: profile, error: profileError } = await supabase
+		// Step 5: Update user profile with extracted data (if not already set)
+		await step.run('update-profile-from-resume', async () => {
+			// Get current profile
+			const { data: profile, error: profileError } = await supabase
+				.from('profiles')
+				.select('full_name, summary, skills, experience, education')
+				.eq('user_id', userId)
+				.single();
+
+			if (profileError) {
+				console.error('Failed to get profile:', profileError);
+				return; // Don't fail the entire job for this
+			}
+
+			// Only update if profile fields are empty
+			const updates: {
+				full_name?: string;
+				summary?: string;
+				skills?: string[];
+				experience?: unknown[];
+				education?: unknown[];
+				updated_at: string;
+			} = {
+				updated_at: new Date().toISOString()
+			};
+
+			// Update name if not set
+			if (!profile.full_name && structuredData.name) {
+				updates.full_name = structuredData.name;
+			}
+
+			// Update summary if not set
+			if (!profile.summary && structuredData.summary) {
+				updates.summary = structuredData.summary;
+			}
+
+			// Update skills if not set
+			if ((!profile.skills || profile.skills.length === 0) && structuredData.skills && structuredData.skills.length > 0) {
+				updates.skills = structuredData.skills;
+			}
+
+			// Update experience if not set
+			if (
+				(!profile.experience || profile.experience.length === 0) &&
+				structuredData.experience &&
+				structuredData.experience.length > 0
+			) {
+				updates.experience = structuredData.experience;
+			}
+
+			// Update education if not set
+			if (
+				(!profile.education || profile.education.length === 0) &&
+				structuredData.education &&
+				structuredData.education.length > 0
+			) {
+				updates.education = structuredData.education;
+			}
+
+			// Only update if we have changes
+			if (Object.keys(updates).length > 1) {
+				const { error: updateError } = await supabase
 					.from('profiles')
-					.select('skills, experience, education')
-					.eq('user_id', userId)
-					.single();
+					.update(updates)
+					.eq('user_id', userId);
 
-				if (profileError) {
-					console.error('Failed to get profile:', profileError);
-					return; // Don't fail the entire job for this
+				if (updateError) {
+					console.error('Failed to update profile:', updateError);
 				}
-
-				// Only update if profile fields are empty
-				const updates: {
-					skills?: string[];
-					experience?: unknown[];
-					education?: unknown[];
-					updated_at: string;
-				} = {
-					updated_at: new Date().toISOString()
-				};
-
-				if (!profile.skills || profile.skills.length === 0) {
-					updates.skills = structuredData.skills;
-				}
-
-				if (
-					(!profile.experience || profile.experience.length === 0) &&
-					structuredData.experience &&
-					structuredData.experience.length > 0
-				) {
-					updates.experience = structuredData.experience;
-				}
-
-				if (
-					(!profile.education || profile.education.length === 0) &&
-					structuredData.education &&
-					structuredData.education.length > 0
-				) {
-					updates.education = structuredData.education;
-				}
-
-				// Only update if we have changes
-				if (Object.keys(updates).length > 1) {
-					const { error: updateError } = await supabase
-						.from('profiles')
-						.update(updates)
-						.eq('user_id', userId);
-
-					if (updateError) {
-						console.error('Failed to update profile:', updateError);
-					}
-				}
-			});
-		}
+			}
+		});
 
 		return {
 			success: true,
