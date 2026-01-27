@@ -73,11 +73,23 @@
 
 		<!-- Progress Steps -->
 		<div class="mb-8">
-			<div class="flex items-start justify-center max-w-2xl mx-auto">
-				{#each steps as step, index}
-					<div class="flex flex-col items-center">
-						<div class="flex items-center">
-							<div class={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+			<div class="relative max-w-xl mx-auto">
+				<!-- Connecting lines (positioned behind icons) -->
+				<div class="absolute top-5 left-0 right-0 flex justify-center px-12">
+					<div class="flex-1 flex">
+						{#each steps as step, index}
+							{#if index < steps.length - 1}
+								<div class={`flex-1 h-0.5 ${currentStep > step.number ? 'bg-primary' : 'bg-muted-foreground/30'}`}></div>
+							{/if}
+						{/each}
+					</div>
+				</div>
+
+				<!-- Icons and labels -->
+				<div class="relative flex justify-between">
+					{#each steps as step}
+						<div class="flex flex-col items-center">
+							<div class={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors bg-background ${
 								currentStep > step.number
 									? 'bg-primary border-primary text-primary-foreground'
 									: currentStep === step.number
@@ -91,15 +103,12 @@
 									<StepIcon class="w-5 h-5" />
 								{/if}
 							</div>
-							{#if index < steps.length - 1}
-								<div class={`w-16 sm:w-24 h-0.5 ${currentStep > step.number ? 'bg-primary' : 'bg-muted-foreground/30'}`}></div>
-							{/if}
+							<span class={`text-xs mt-2 text-center whitespace-nowrap ${currentStep >= step.number ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+								{step.title}
+							</span>
 						</div>
-						<span class={`text-xs mt-2 text-center whitespace-nowrap ${currentStep >= step.number ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-							{step.title}
-						</span>
-					</div>
-				{/each}
+					{/each}
+				</div>
 			</div>
 		</div>
 
