@@ -383,12 +383,13 @@ export const dailyJobDiscovery = inngest.createFunction(
 			};
 		});
 
-		// Step 9: Queue resume generation for each new job (respecting usage limits)
-		const generationResults = await step.run('queue-resume-generation', async () => {
+		// Step 9: Create job applications and collect events to send
+		const generationResults = await step.run('create-job-applications', async () => {
 			const results = {
 				queued: 0,
 				skippedLimitReached: 0,
-				failed: 0
+				failed: 0,
+				eventsToSend: [] as Array<{ userId: string; jobId: string; applicationId: string }>
 			};
 
 			// Check current usage to determine how many we can generate
@@ -426,15 +427,12 @@ export const dailyJobDiscovery = inngest.createFunction(
 					continue;
 				}
 
-				// Only queue generation if within limit
+				// Collect events to send after step completes
 				if (withinLimit) {
-					await inngest.send({
-						name: 'resume/generation.requested',
-						data: {
-							userId,
-							jobId: job.id,
-							applicationId: application.id
-						}
+					results.eventsToSend.push({
+						userId,
+						jobId: job.id,
+						applicationId: application.id
 					});
 					results.queued++;
 				} else {
@@ -444,6 +442,21 @@ export const dailyJobDiscovery = inngest.createFunction(
 
 			return results;
 		});
+
+		// Step 9.5: Send resume generation events using step.sendEvent
+		if (generationResults.eventsToSend.length > 0) {
+			await step.sendEvent(
+				'send-generation-events',
+				generationResults.eventsToSend.map(evt => ({
+					name: 'resume/generation.requested' as const,
+					data: {
+						userId: evt.userId,
+						jobId: evt.jobId,
+						applicationId: evt.applicationId
+					}
+				}))
+			);
+		}
 
 		// Step 10: Log search history
 		await step.run('log-search-history', async () => {
@@ -619,15 +632,16 @@ export const scheduleDailyDiscovery = inngest.createFunction(
 			return data || [];
 		});
 
-		// Send discovery event for each user
-		await step.run('send-discovery-events', async () => {
-			for (const user of users) {
-				await inngest.send({
-					name: 'job/discovery.requested',
+		// Send discovery event for each user using step.sendEvent
+		if (users.length > 0) {
+			await step.sendEvent(
+				'send-discovery-events',
+				users.map(user => ({
+					name: 'job/discovery.requested' as const,
 					data: { userId: user.user_id }
-				});
-			}
-		});
+				}))
+			);
+		}
 
 		return { usersScheduled: users.length };
 	}
