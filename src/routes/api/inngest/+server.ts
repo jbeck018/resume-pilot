@@ -58,38 +58,48 @@ function createRequestWithFullUrl(event: Parameters<RequestHandler>[0]): Request
 	});
 }
 
-// Type for calling the Cloudflare handler with positional args
-type CloudflareHandler = (req: Request, env: Record<string, string | undefined>) => Promise<Response>;
+// Type for Cloudflare Pages Functions format (object with request and env)
+type CloudflarePagesContext = { request: Request; env: Record<string, string | undefined> };
+type CloudflareHandler = (ctx: CloudflarePagesContext) => Promise<Response>;
 
 // Export the handlers using the Cloudflare adapter pattern
-// but with SvelteKit's properly-parsed URL
+// Pass as Pages Functions format: { request, env }
 export const GET: RequestHandler = async (event) => {
 	const handler = getHandler() as unknown as CloudflareHandler;
 	const requestWithUrl = createRequestWithFullUrl(event);
 
 	// Log for debugging (can remove once confirmed working)
-	console.log('[Inngest GET] URL:', event.url.href);
+	console.log('[Inngest GET] Original request.url:', event.request.url);
+	console.log('[Inngest GET] SvelteKit event.url:', event.url.href);
+	console.log('[Inngest GET] New request.url:', requestWithUrl.url);
 	console.log('[Inngest GET] fnId:', event.url.searchParams.get('fnId'));
 
-	return handler(requestWithUrl, {});
+	// Pass in Cloudflare Pages Functions format
+	return handler({ request: requestWithUrl, env: {} });
 };
 
 export const POST: RequestHandler = async (event) => {
 	const handler = getHandler() as unknown as CloudflareHandler;
 	const requestWithUrl = createRequestWithFullUrl(event);
 
-	console.log('[Inngest POST] URL:', event.url.href);
+	console.log('[Inngest POST] Original request.url:', event.request.url);
+	console.log('[Inngest POST] SvelteKit event.url:', event.url.href);
+	console.log('[Inngest POST] New request.url:', requestWithUrl.url);
 	console.log('[Inngest POST] fnId:', event.url.searchParams.get('fnId'));
 
-	return handler(requestWithUrl, {});
+	// Pass in Cloudflare Pages Functions format
+	return handler({ request: requestWithUrl, env: {} });
 };
 
 export const PUT: RequestHandler = async (event) => {
 	const handler = getHandler() as unknown as CloudflareHandler;
 	const requestWithUrl = createRequestWithFullUrl(event);
 
-	console.log('[Inngest PUT] URL:', event.url.href);
+	console.log('[Inngest PUT] Original request.url:', event.request.url);
+	console.log('[Inngest PUT] SvelteKit event.url:', event.url.href);
+	console.log('[Inngest PUT] New request.url:', requestWithUrl.url);
 	console.log('[Inngest PUT] fnId:', event.url.searchParams.get('fnId'));
 
-	return handler(requestWithUrl, {});
+	// Pass in Cloudflare Pages Functions format
+	return handler({ request: requestWithUrl, env: {} });
 };
