@@ -3,9 +3,34 @@ import { createServerClient } from '@supabase/ssr';
 import { env as publicEnv } from '$env/dynamic/public';
 import { env } from '$env/dynamic/private';
 import { complete, selectModel } from '$lib/server/llm/client';
-import { extractText } from 'unpdf';
 import mammoth from 'mammoth';
 import type { ResumeStructuredData } from '$lib/server/database/schema';
+
+// Helper function to extract text from PDF using pdfjs-serverless
+// Uses dynamic import for Cloudflare Workers compatibility
+async function extractPdfText(pdfData: Uint8Array): Promise<string> {
+	// Dynamic import is required for Cloudflare Workers compatibility
+	// pdfjs-serverless is specifically built for serverless/edge environments
+	const { getDocument } = await import('pdfjs-serverless');
+
+	const document = await getDocument({
+		data: pdfData,
+		useSystemFonts: true // Required for serverless environments
+	}).promise;
+
+	const textParts: string[] = [];
+
+	for (let i = 1; i <= document.numPages; i++) {
+		const page = await document.getPage(i);
+		const textContent = await page.getTextContent();
+		const pageText = textContent.items
+			.map((item) => ('str' in item ? (item as { str: string }).str : ''))
+			.join(' ');
+		textParts.push(pageText);
+	}
+
+	return textParts.join('\n\n');
+}
 
 // Resume parsing workflow
 export const parseResumeFile = inngest.createFunction(
@@ -55,8 +80,8 @@ export const parseResumeFile = inngest.createFunction(
 			const fileBuffer = new Uint8Array(fileData);
 
 			if (fileType === 'pdf') {
-				// Parse PDF using unpdf (edge-compatible, no Node.js-specific APIs)
-				const { text } = await extractText(fileBuffer);
+				// Parse PDF using pdfjs-serverless (Cloudflare Workers compatible)
+				const text = await extractPdfText(fileBuffer);
 				return text;
 			} else if (fileType === 'docx') {
 				// Parse DOCX
