@@ -48,6 +48,11 @@ export const profiles = pgTable('profiles', {
 	remotePreference: varchar('remote_preference', { length: 50 }).default('hybrid'), // remote, hybrid, onsite
 	minSalary: integer('min_salary'),
 	maxSalary: integer('max_salary'),
+	idealJobDescription: text('ideal_job_description'), // User's description of their ideal job
+
+	// Onboarding
+	onboardingCompleted: boolean('onboarding_completed').default(false),
+	portfolioUrls: jsonb('portfolio_urls').$type<string[]>().default([]), // Dribbble, Behance, personal site, etc.
 
 	// Resume style preference
 	preferredResumeStyle: varchar('preferred_resume_style', { length: 50 }).default('classic'),
