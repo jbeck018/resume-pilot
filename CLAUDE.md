@@ -1,6 +1,152 @@
-# Claude Code Configuration - Claude Flow V3
+# CLAUDE.md
 
-## 🚨 AUTOMATIC SWARM ORCHESTRATION
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+HowlerHire is an AI-powered job hunting assistant built with SvelteKit, deployed to Cloudflare Pages. It automatically discovers job listings, generates tailored resumes, and helps users track applications.
+
+## Tech Stack
+
+- **Framework**: SvelteKit 2 with Svelte 5 (runes mode)
+- **Database**: Supabase (PostgreSQL + Auth)
+- **Background Jobs**: Inngest
+- **AI**: Anthropic Claude via AI SDK (`@ai-sdk/anthropic`)
+- **Deployment**: Cloudflare Pages
+- **Observability**: Langfuse (LLM tracing), Sentry (error tracking)
+- **Styling**: Tailwind CSS + shadcn-svelte components
+
+## Development Commands
+
+```bash
+npm run dev              # Start dev server (port 5173)
+npm run build            # Production build with migrations
+npm run check            # TypeScript type checking
+npm run lint             # ESLint + Prettier
+npm run test             # Run Vitest tests
+npm run inngest:dev      # Start Inngest dev server (required for background jobs)
+```
+
+**Local development requires both servers:**
+```bash
+# Terminal 1
+npm run dev
+
+# Terminal 2
+npm run inngest:dev
+```
+
+## Key Architecture
+
+### Path Aliases
+- `$components` → `src/lib/components`
+- `$server` → `src/lib/server`
+- `$lib` → `src/lib` (SvelteKit default)
+
+### Server-Side Modules (`src/lib/server/`)
+
+| Module | Purpose |
+|--------|---------|
+| `database/` | Supabase client, types, queries |
+| `inngest/` | Background job definitions (resume parsing, job discovery, email) |
+| `llm/` | AI client, resume generator, token budget management |
+| `jobs/` | Job board API integrations (Lever, Greenhouse, RemoteOK, etc.) |
+| `email/` | Resend email service |
+
+### Inngest Functions (`src/lib/server/inngest/`)
+- `parseResumeFile` - Extract skills/experience from uploaded resumes
+- `dailyJobDiscovery` - Fetch jobs from multiple sources
+- `generateResumeForJob` - AI-tailored resume generation
+- `sendWeeklySummaries` - Email digest to users
+- `syncProfileFromGitHub` - Import profile from GitHub
+
+### LLM Module (`src/lib/server/llm/`)
+- `client.ts` - Anthropic AI SDK setup
+- `observable-client.ts` - Langfuse-wrapped client for tracing
+- `resume-generator.ts` - Resume tailoring prompts and generation
+- `budget.ts` - Token usage tracking and limits
+
+### Routes Structure
+```
+src/routes/
+├── (auth)/           # Auth pages (login, signup, callback)
+├── (marketing)/      # Public pages (landing, pricing)
+├── dashboard/        # Protected user dashboard
+│   ├── jobs/         # Job listings and details
+│   ├── resumes/      # Resume management
+│   ├── applications/ # Application tracking
+│   └── profile/      # User profile settings
+├── admin/            # Admin dashboard (requires admin role)
+├── api/
+│   ├── inngest/      # Inngest webhook endpoint
+│   └── ...           # Other API endpoints
+└── onboarding/       # New user onboarding flow
+```
+
+### Authentication Flow
+Server hooks (`src/hooks.server.ts`) handle:
+1. Supabase client initialization with cookies
+2. Session validation via `safeGetSession()`
+3. Auth guard redirecting unauthenticated users from `/dashboard/*`
+
+## Cloudflare Pages Specifics
+
+### Environment Variables
+- Use `$env/dynamic/private` for server-side env vars (Cloudflare compatible)
+- Never use `$env/static/private` (breaks Cloudflare Workers)
+- Platform env available via `event.platform?.env` in hooks
+
+### Inngest Integration
+The Inngest endpoint at `/api/inngest/+server.ts` uses:
+- `inngest/sveltekit` adapter (NOT `inngest/cloudflare`)
+- Handler created at request time to access dynamic env vars
+- Pass full SvelteKit `event` to handler methods, not just `event.request`
+
+```typescript
+// Correct pattern for Cloudflare Pages
+import { serve } from 'inngest/sveltekit';
+import { env } from '$env/dynamic/private';
+
+function getHandler() {
+  return serve({ client: inngest, functions, signingKey: env.INNGEST_SIGNING_KEY });
+}
+
+export const POST: RequestHandler = async (event) => {
+  const handler = getHandler();
+  return handler.POST(event);  // Pass full event!
+};
+```
+
+### Compatibility Flags
+`wrangler.toml` requires:
+- `nodejs_compat` - Node.js API compatibility
+- `nodejs_als` - AsyncLocalStorage for Sentry
+
+## Database
+
+Uses Supabase with:
+- PostgreSQL database
+- Row Level Security (RLS) policies
+- Auth triggers for profile creation
+- Types generated in `src/lib/server/database/types.ts`
+
+Key tables: `profiles`, `resumes`, `jobs`, `job_applications`, `usage_tracking`
+
+## Testing
+
+```bash
+npm run test              # Run all tests
+npm run test -- --watch   # Watch mode
+npm run test -- src/lib   # Run specific path
+```
+
+---
+
+# Claude Flow V3 Orchestration
+
+The following section configures multi-agent swarm orchestration for complex tasks.
+
+## AUTOMATIC SWARM ORCHESTRATION
 
 **When starting work on complex tasks, Claude Code MUST automatically:**
 

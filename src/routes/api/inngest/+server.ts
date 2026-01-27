@@ -28,7 +28,8 @@ function getHandler() {
 	return serve({
 		client: inngest,
 		functions,
-		signingKey: env.INNGEST_SIGNING_KEY
+		signingKey: env.INNGEST_SIGNING_KEY,
+		servePath: '/api/inngest'
 	});
 }
 
