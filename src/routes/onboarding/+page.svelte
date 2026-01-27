@@ -73,10 +73,10 @@
 
 		<!-- Progress Steps -->
 		<div class="mb-8">
-			<div class="flex items-center justify-between max-w-2xl mx-auto">
+			<div class="flex items-start justify-center max-w-2xl mx-auto">
 				{#each steps as step, index}
-					<div class="flex flex-col items-center flex-1">
-						<div class="flex items-center w-full">
+					<div class="flex flex-col items-center">
+						<div class="flex items-center">
 							<div class={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
 								currentStep > step.number
 									? 'bg-primary border-primary text-primary-foreground'
@@ -92,10 +92,10 @@
 								{/if}
 							</div>
 							{#if index < steps.length - 1}
-								<div class={`flex-1 h-0.5 mx-2 ${currentStep > step.number ? 'bg-primary' : 'bg-muted-foreground/30'}`}></div>
+								<div class={`w-16 sm:w-24 h-0.5 ${currentStep > step.number ? 'bg-primary' : 'bg-muted-foreground/30'}`}></div>
 							{/if}
 						</div>
-						<span class={`text-xs mt-2 text-center ${currentStep >= step.number ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+						<span class={`text-xs mt-2 text-center whitespace-nowrap ${currentStep >= step.number ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
 							{step.title}
 						</span>
 					</div>
