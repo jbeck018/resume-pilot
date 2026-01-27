@@ -14,8 +14,77 @@
 		TrendingUp,
 		XCircle
 	} from 'lucide-svelte';
+	import { invalidateAll } from '$app/navigation';
+	import { onDestroy } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Polling configuration
+	const FAST_POLL_INTERVAL = 5000; // 5 seconds when processing
+	const SLOW_POLL_INTERVAL = 30000; // 30 seconds for general updates
+	let pollInterval: ReturnType<typeof setInterval> | null = null;
+	let lastPollTime = Date.now();
+
+	// Smart polling: faster when resumes are being parsed, slower otherwise
+	function startPolling() {
+		stopPolling();
+		const interval = data.parsingResumes && data.parsingResumes.length > 0
+			? FAST_POLL_INTERVAL
+			: SLOW_POLL_INTERVAL;
+
+		pollInterval = setInterval(async () => {
+			// Only poll if tab is visible
+			if (document.visibilityState === 'visible') {
+				lastPollTime = Date.now();
+				await invalidateAll();
+			}
+		}, interval);
+	}
+
+	function stopPolling() {
+		if (pollInterval) {
+			clearInterval(pollInterval);
+			pollInterval = null;
+		}
+	}
+
+	// Start polling on mount and adjust based on parsing state
+	$effect(() => {
+		startPolling();
+		return () => stopPolling();
+	});
+
+	// Restart polling with appropriate interval when parsing state changes
+	$effect(() => {
+		const hasParsing = data.parsingResumes && data.parsingResumes.length > 0;
+		// This will trigger when parsingResumes changes
+		if (hasParsing !== undefined) {
+			startPolling();
+		}
+	});
+
+	// Pause polling when tab is hidden, resume when visible
+	function handleVisibilityChange() {
+		if (document.visibilityState === 'visible') {
+			// If it's been more than 30 seconds since last poll, refresh immediately
+			if (Date.now() - lastPollTime > 30000) {
+				invalidateAll();
+			}
+			startPolling();
+		} else {
+			stopPolling();
+		}
+	}
+
+	// Set up visibility listener
+	$effect(() => {
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+	});
+
+	onDestroy(() => {
+		stopPolling();
+	});
 </script>
 
 <svelte:head>

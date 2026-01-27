@@ -15,6 +15,8 @@
 		XCircle
 	} from 'lucide-svelte';
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import { onDestroy } from 'svelte';
 
 	type JobData = {
 		id: string;
@@ -32,6 +34,46 @@
 
 	let searchQuery = $state('');
 	let statusFilter = $state<string>('all');
+
+	// Auto-refresh polling (every 30 seconds for new jobs)
+	const POLL_INTERVAL = 30000;
+	let pollInterval: ReturnType<typeof setInterval> | null = null;
+	let lastPollTime = Date.now();
+
+	function startPolling() {
+		if (pollInterval) clearInterval(pollInterval);
+		pollInterval = setInterval(async () => {
+			if (document.visibilityState === 'visible') {
+				lastPollTime = Date.now();
+				await invalidateAll();
+			}
+		}, POLL_INTERVAL);
+	}
+
+	function handleVisibilityChange() {
+		if (document.visibilityState === 'visible') {
+			if (Date.now() - lastPollTime > POLL_INTERVAL) {
+				invalidateAll();
+			}
+			startPolling();
+		} else if (pollInterval) {
+			clearInterval(pollInterval);
+			pollInterval = null;
+		}
+	}
+
+	$effect(() => {
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		startPolling();
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			if (pollInterval) clearInterval(pollInterval);
+		};
+	});
+
+	onDestroy(() => {
+		if (pollInterval) clearInterval(pollInterval);
+	});
 
 	const filteredJobs = $derived(() => {
 		let jobs = (data.jobs || []) as JobData[];

@@ -19,7 +19,8 @@
 		Building2
 	} from 'lucide-svelte';
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { onDestroy } from 'svelte';
 
 	type ApplicationData = {
 		id: string;
@@ -39,6 +40,46 @@
 	let selectedStatus = $state('all');
 	let view = $state<'list' | 'kanban'>('list');
 	let filtersInitialized = $state(false);
+
+	// Auto-refresh polling (every 30 seconds for application updates)
+	const POLL_INTERVAL = 30000;
+	let pollInterval: ReturnType<typeof setInterval> | null = null;
+	let lastPollTime = Date.now();
+
+	function startPolling() {
+		if (pollInterval) clearInterval(pollInterval);
+		pollInterval = setInterval(async () => {
+			if (document.visibilityState === 'visible') {
+				lastPollTime = Date.now();
+				await invalidateAll();
+			}
+		}, POLL_INTERVAL);
+	}
+
+	function handleVisibilityChange() {
+		if (document.visibilityState === 'visible') {
+			if (Date.now() - lastPollTime > POLL_INTERVAL) {
+				invalidateAll();
+			}
+			startPolling();
+		} else if (pollInterval) {
+			clearInterval(pollInterval);
+			pollInterval = null;
+		}
+	}
+
+	$effect(() => {
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		startPolling();
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			if (pollInterval) clearInterval(pollInterval);
+		};
+	});
+
+	onDestroy(() => {
+		if (pollInterval) clearInterval(pollInterval);
+	});
 
 	// Sync filter state with URL params on initial load
 	$effect(() => {
