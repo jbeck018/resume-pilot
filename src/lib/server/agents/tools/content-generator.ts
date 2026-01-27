@@ -132,7 +132,7 @@ function buildGenerationConfig(input: ContentGenerateInput): GenerationConfig {
 	switch (templateType) {
 		case 'resume_section':
 			prompt = buildResumeSectionPrompt(context);
-			model = 'claude-3-5-sonnet-20241022';
+			model = 'claude-sonnet-4-5-20250929';
 			maxTokens = 1000;
 			break;
 
@@ -144,7 +144,7 @@ function buildGenerationConfig(input: ContentGenerateInput): GenerationConfig {
 
 		case 'summary':
 			prompt = buildSummaryPrompt(context);
-			model = 'claude-3-haiku-20240307';
+			model = 'claude-3-5-haiku-20241022';
 			maxTokens = 200;
 			break;
 

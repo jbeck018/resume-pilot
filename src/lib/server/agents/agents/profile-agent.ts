@@ -23,7 +23,7 @@ export class ProfileAgent extends BaseAgent<ProfileAgentInput, ProfileAgentOutpu
 			id: 'profile-agent',
 			name: 'Profile Enhancement Agent',
 			description: 'Analyzes profiles and suggests improvements',
-			defaultModel: 'claude-3-haiku-20240307',
+			defaultModel: 'claude-3-5-haiku-20241022',
 			maxRetries: 2,
 			timeoutMs: 45000,
 			priority: 'low'

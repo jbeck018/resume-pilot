@@ -122,7 +122,7 @@ export const parseResumeFile = inngest.createFunction(
 				// Use Claude's native PDF support - sends PDF directly to Claude
 				// This provides better accuracy for complex layouts, tables, and visual elements
 				const result = await generateText({
-					model: anthropic('claude-3-5-sonnet-20241022'),
+					model: anthropic('claude-sonnet-4-5-20250929'),
 					messages: [
 						{
 							role: 'user',
@@ -180,7 +180,7 @@ export const parseResumeFile = inngest.createFunction(
 
 				// Then send to Claude for structuring
 				const llmResult = await generateText({
-					model: anthropic('claude-3-haiku-20240307'), // Use Haiku for text-only (cheaper)
+					model: anthropic('claude-3-5-haiku-20241022'), // Use Haiku 3.5 for text-only (cheaper)
 					messages: [
 						{
 							role: 'user',

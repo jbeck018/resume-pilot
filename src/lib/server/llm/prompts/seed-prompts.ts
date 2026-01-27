@@ -53,7 +53,7 @@ STRUCTURE:
 
 Output the resume in clean markdown format.`,
 		config: {
-			model: 'claude-3-5-sonnet-20241022',
+			model: 'claude-sonnet-4-5-20250929',
 			temperature: 0.5,
 			max_tokens: 4000
 		},
@@ -87,7 +87,7 @@ Apply the suggestions and return the improved resume.`
 			}
 		],
 		config: {
-			model: 'claude-3-5-sonnet-20241022',
+			model: 'claude-sonnet-4-5-20250929',
 			temperature: 0.4,
 			max_tokens: 4000
 		},
@@ -238,7 +238,7 @@ Analyze this profile and provide recommendations.`
 			}
 		],
 		config: {
-			model: 'claude-3-5-sonnet-20241022',
+			model: 'claude-sonnet-4-5-20250929',
 			temperature: 0.4,
 			max_tokens: 2000
 		},
@@ -281,7 +281,7 @@ Identify all skills mentioned, categorize them, and determine their importance l
 			}
 		],
 		config: {
-			model: 'claude-3-haiku-20240307',
+			model: 'claude-3-5-haiku-20241022',
 			temperature: 0.2,
 			max_tokens: 1500
 		},
@@ -330,7 +330,7 @@ Evaluate quality and ATS compatibility.`
 			}
 		],
 		config: {
-			model: 'claude-3-haiku-20240307',
+			model: 'claude-3-5-haiku-20241022',
 			temperature: 0.2,
 			max_tokens: 1000
 		},
@@ -373,7 +373,7 @@ Extract company culture, values, technologies, and relevant information.`
 			}
 		],
 		config: {
-			model: 'claude-3-haiku-20240307',
+			model: 'claude-3-5-haiku-20241022',
 			temperature: 0.3,
 			max_tokens: 1500
 		},
@@ -404,7 +404,7 @@ Generate high-quality, professional content that:
 
 Output the content directly without additional commentary.`,
 		config: {
-			model: 'claude-3-5-sonnet-20241022',
+			model: 'claude-sonnet-4-5-20250929',
 			temperature: 0.6,
 			max_tokens: 2000
 		},

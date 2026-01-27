@@ -69,8 +69,8 @@ function getGoogleProvider() {
 }
 
 export type Model =
-	| 'claude-3-5-sonnet-20241022'
-	| 'claude-3-haiku-20240307'
+	| 'claude-sonnet-4-5-20250929'
+	| 'claude-3-5-haiku-20241022'
 	| 'gpt-4o'
 	| 'gpt-4o-mini'
 	| 'gemini-1.5-pro'
@@ -106,10 +106,10 @@ export interface CompletionResult {
 	cached?: boolean;
 }
 
-// Cost per 1M tokens (in cents) - 2024 pricing
+// Cost per 1M tokens (in cents) - 2025 pricing
 const MODEL_COSTS: Record<Model, { input: number; output: number }> = {
-	'claude-3-5-sonnet-20241022': { input: 300, output: 1500 },
-	'claude-3-haiku-20240307': { input: 25, output: 125 },
+	'claude-sonnet-4-5-20250929': { input: 300, output: 1500 },
+	'claude-3-5-haiku-20241022': { input: 80, output: 400 },
 	'gpt-4o': { input: 250, output: 1000 },
 	'gpt-4o-mini': { input: 15, output: 60 },
 	'gemini-1.5-pro': { input: 125, output: 500 },
@@ -354,7 +354,7 @@ export function selectModel(
 	switch (task) {
 		case 'resume':
 			// High quality needed for resume generation
-			return 'claude-3-5-sonnet-20241022';
+			return 'claude-sonnet-4-5-20250929';
 		case 'cover_letter':
 			// Good quality, slightly cheaper
 			return 'gpt-4o';
@@ -363,7 +363,7 @@ export function selectModel(
 			return 'gemini-1.5-flash';
 		case 'summary':
 			// Fast for simple summaries
-			return 'claude-3-haiku-20240307';
+			return 'claude-3-5-haiku-20241022';
 		default:
 			return 'gpt-4o-mini';
 	}

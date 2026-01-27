@@ -150,8 +150,8 @@ export interface ToolResult<T = unknown> {
  * Available model identifiers
  */
 export type ModelId =
-	| 'claude-3-5-sonnet-20241022'
-	| 'claude-3-haiku-20240307'
+	| 'claude-sonnet-4-5-20250929'
+	| 'claude-3-5-haiku-20241022'
 	| 'gpt-4o'
 	| 'gpt-4o-mini'
 	| 'gemini-1.5-pro'

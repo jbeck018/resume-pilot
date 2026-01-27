@@ -26,7 +26,7 @@ export class ResumeAgent extends BaseAgent<ResumeAgentInput, ResumeAgentOutput> 
 			id: 'resume-agent',
 			name: 'Resume Tailoring Agent',
 			description: 'Tailors resumes to specific job postings with optional company research',
-			defaultModel: 'claude-3-5-sonnet-20241022',
+			defaultModel: 'claude-sonnet-4-5-20250929',
 			maxRetries: 2,
 			timeoutMs: 120000,
 			priority: 'high'
@@ -258,7 +258,7 @@ Apply the suggestions while maintaining accuracy and professionalism. Return the
 
 		const result = await this.generate(
 			{
-				model: 'claude-3-5-sonnet-20241022',
+				model: 'claude-sonnet-4-5-20250929',
 				userPrompt: prompt,
 				maxTokens: 4000,
 				temperature: 0.4
