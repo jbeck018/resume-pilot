@@ -78,14 +78,12 @@
     "lucide-svelte": "^0.469.0",
     "mammoth": "^1.11.0",
     "mode-watcher": "^0.5.1",
-    "pdfjs-serverless": "^1.1.0",
     "postgres": "^3.4.5",
     "resend": "^6.8.0",
     "stripe": "^17.5.0",
     "svelte-sonner": "^0.3.28",
     "tailwind-merge": "^2.6.0",
     "tailwind-variants": "^0.3.1",
-    "unpdf": "^1.4.0",
     "zod": "^3.24.1"
   }
 }

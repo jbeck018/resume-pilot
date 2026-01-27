@@ -2,35 +2,72 @@ import { inngest } from '../client';
 import { createServerClient } from '@supabase/ssr';
 import { env as publicEnv } from '$env/dynamic/public';
 import { env } from '$env/dynamic/private';
-import { complete, selectModel } from '$lib/server/llm/client';
+import { generateText } from 'ai';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import mammoth from 'mammoth';
 import type { ResumeStructuredData } from '$lib/server/database/schema';
 
-// Helper function to extract text from PDF using pdfjs-serverless
-// Uses dynamic import for Cloudflare Workers compatibility
-async function extractPdfText(pdfData: Uint8Array): Promise<string> {
-	// Dynamic import is required for Cloudflare Workers compatibility
-	// pdfjs-serverless is specifically built for serverless/edge environments
-	const { getDocument } = await import('pdfjs-serverless');
+// Get Anthropic provider (optionally through Cloudflare AI Gateway)
+function getAnthropicProvider() {
+	const baseURL = env.CLOUDFLARE_AI_GATEWAY_URL
+		? `${env.CLOUDFLARE_AI_GATEWAY_URL}/anthropic`
+		: undefined;
 
-	const document = await getDocument({
-		data: pdfData,
-		useSystemFonts: true // Required for serverless environments
-	}).promise;
-
-	const textParts: string[] = [];
-
-	for (let i = 1; i <= document.numPages; i++) {
-		const page = await document.getPage(i);
-		const textContent = await page.getTextContent();
-		const pageText = textContent.items
-			.map((item) => ('str' in item ? (item as { str: string }).str : ''))
-			.join(' ');
-		textParts.push(pageText);
-	}
-
-	return textParts.join('\n\n');
+	return createAnthropic({
+		apiKey: env.ANTHROPIC_API_KEY,
+		baseURL
+	});
 }
+
+// Prompt for structured resume extraction
+const RESUME_EXTRACTION_PROMPT = `You are a resume parsing expert. Analyze this resume and extract structured information.
+
+Extract the following information in valid JSON format:
+{
+  "name": "Full name of the candidate",
+  "email": "Email address",
+  "phone": "Phone number",
+  "summary": "Professional summary or objective",
+  "skills": ["skill1", "skill2", ...],
+  "experience": [
+    {
+      "title": "Job title",
+      "company": "Company name",
+      "location": "Location",
+      "startDate": "Start date (YYYY-MM format)",
+      "endDate": "End date (YYYY-MM format) or null if current",
+      "current": true/false,
+      "description": "Job description",
+      "skills": ["skill1", "skill2", ...]
+    }
+  ],
+  "education": [
+    {
+      "institution": "School name",
+      "degree": "Degree type",
+      "field": "Field of study",
+      "startDate": "Start date (YYYY-MM format)",
+      "endDate": "End date (YYYY-MM format)",
+      "gpa": "GPA if mentioned"
+    }
+  ],
+  "certifications": ["certification1", "certification2", ...],
+  "projects": [
+    {
+      "name": "Project name",
+      "description": "Project description",
+      "url": "Project URL if available"
+    }
+  ]
+}
+
+IMPORTANT:
+- Extract ALL available information from both text and visual elements
+- Pay attention to resume formatting, section headers, and layout
+- Use null for missing fields
+- Normalize dates to YYYY-MM format when possible
+- Extract skills from experience descriptions if not explicitly listed
+- Return ONLY valid JSON, no additional text or markdown`;
 
 // Resume parsing workflow
 export const parseResumeFile = inngest.createFunction(
@@ -74,102 +111,40 @@ export const parseResumeFile = inngest.createFunction(
 			return Array.from(new Uint8Array(arrayBuffer));
 		});
 
-		// Step 2: Extract text content from the file
-		const extractedText = await step.run('extract-text', async () => {
-			// Convert array back to Uint8Array for parsing
+		// Step 2 & 3 combined: Extract text and structure content
+		// For PDFs, we use Claude's native PDF support to do both in one step
+		// For DOCX, we extract text first then send to Claude
+		const { extractedText, structuredData } = await step.run('parse-and-structure', async () => {
 			const fileBuffer = new Uint8Array(fileData);
+			const anthropic = getAnthropicProvider();
 
 			if (fileType === 'pdf') {
-				// Parse PDF using pdfjs-serverless (Cloudflare Workers compatible)
-				const text = await extractPdfText(fileBuffer);
-				return text;
-			} else if (fileType === 'docx') {
-				// Parse DOCX
-				const result = await mammoth.extractRawText({
-					buffer: Buffer.from(fileBuffer)
+				// Use Claude's native PDF support - sends PDF directly to Claude
+				// This provides better accuracy for complex layouts, tables, and visual elements
+				const result = await generateText({
+					model: anthropic('claude-3-5-sonnet-20241022'),
+					messages: [
+						{
+							role: 'user',
+							content: [
+								{
+									type: 'file',
+									data: fileBuffer,
+									mimeType: 'application/pdf'
+								},
+								{
+									type: 'text',
+									text: RESUME_EXTRACTION_PROMPT
+								}
+							]
+						}
+					],
+					maxTokens: 4096,
+					temperature: 0.3
 				});
-				return result.value;
-			} else {
-				throw new Error(`Unsupported file type: ${fileType}`);
-			}
-		});
 
-		// Step 3: Use LLM to structure the extracted content
-		const structuredData = await step.run('structure-content', async () => {
-			const prompt = `You are a resume parsing expert. Extract structured information from the following resume text.
-
-Resume Text:
-${extractedText}
-
-Extract the following information in valid JSON format:
-{
-  "name": "Full name of the candidate",
-  "email": "Email address",
-  "phone": "Phone number",
-  "summary": "Professional summary or objective",
-  "skills": ["skill1", "skill2", ...],
-  "experience": [
-    {
-      "title": "Job title",
-      "company": "Company name",
-      "location": "Location",
-      "startDate": "Start date (YYYY-MM format)",
-      "endDate": "End date (YYYY-MM format) or null if current",
-      "current": true/false,
-      "description": "Job description",
-      "skills": ["skill1", "skill2", ...]
-    }
-  ],
-  "education": [
-    {
-      "institution": "School name",
-      "degree": "Degree type",
-      "field": "Field of study",
-      "startDate": "Start date (YYYY-MM format)",
-      "endDate": "End date (YYYY-MM format)",
-      "gpa": "GPA if mentioned"
-    }
-  ],
-  "certifications": ["certification1", "certification2", ...],
-  "projects": [
-    {
-      "name": "Project name",
-      "description": "Project description",
-      "url": "Project URL if available"
-    }
-  ]
-}
-
-Important:
-- Extract ALL available information
-- Use null for missing fields
-- Normalize dates to YYYY-MM format when possible
-- Extract skills from experience descriptions if not explicitly listed
-- Return ONLY valid JSON, no additional text`;
-
-			const result = await complete({
-				model: selectModel('summary'), // Use fast Haiku model for parsing
-				messages: [
-					{
-						role: 'user',
-						content: prompt
-					}
-				],
-				maxTokens: 4096,
-				temperature: 0.3, // Lower temperature for more consistent parsing
-				userId,
-				metadata: {
-					purpose: 'resume-parsing',
-					resumeId
-				}
-			});
-
-			// Parse the JSON response
-			try {
-				// Extract JSON from the response (handle potential markdown formatting)
-				let jsonText = result.content.trim();
-
-				// Remove markdown code blocks if present
+				// Parse JSON response
+				let jsonText = result.text.trim();
 				if (jsonText.startsWith('```json')) {
 					jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
 				} else if (jsonText.startsWith('```')) {
@@ -177,11 +152,56 @@ Important:
 				}
 
 				const parsed = JSON.parse(jsonText) as ResumeStructuredData;
-				return parsed;
-			} catch (error) {
-				console.error('Failed to parse LLM response as JSON:', error);
-				console.error('Response:', result.content);
-				throw new Error('Failed to parse structured resume data from LLM response');
+
+				// For PDF, we don't have raw text separately, so we'll construct a summary
+				const textSummary = [
+					parsed.name,
+					parsed.email,
+					parsed.phone,
+					parsed.summary,
+					'Skills: ' + (parsed.skills?.join(', ') || ''),
+					...(parsed.experience?.map(
+						(e) => `${e.title} at ${e.company}: ${e.description}`
+					) || []),
+					...(parsed.education?.map(
+						(e) => `${e.degree} in ${e.field} from ${e.institution}`
+					) || [])
+				]
+					.filter(Boolean)
+					.join('\n\n');
+
+				return { extractedText: textSummary, structuredData: parsed };
+			} else if (fileType === 'docx') {
+				// For DOCX, extract text with mammoth first
+				const result = await mammoth.extractRawText({
+					buffer: Buffer.from(fileBuffer)
+				});
+				const text = result.value;
+
+				// Then send to Claude for structuring
+				const llmResult = await generateText({
+					model: anthropic('claude-3-haiku-20240307'), // Use Haiku for text-only (cheaper)
+					messages: [
+						{
+							role: 'user',
+							content: `${RESUME_EXTRACTION_PROMPT}\n\nResume Text:\n${text}`
+						}
+					],
+					maxTokens: 4096,
+					temperature: 0.3
+				});
+
+				let jsonText = llmResult.text.trim();
+				if (jsonText.startsWith('```json')) {
+					jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
+				} else if (jsonText.startsWith('```')) {
+					jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
+				}
+
+				const parsed = JSON.parse(jsonText) as ResumeStructuredData;
+				return { extractedText: text, structuredData: parsed };
+			} else {
+				throw new Error(`Unsupported file type: ${fileType}`);
 			}
 		});
 
