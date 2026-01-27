@@ -19,8 +19,16 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 		redirect(303, '/dashboard');
 	}
 
+	// Fetch any existing resumes (for multi-resume upload support)
+	const { data: resumes } = await supabase
+		.from('resumes')
+		.select('id, name, original_file_name, created_at')
+		.eq('user_id', user.id)
+		.order('created_at', { ascending: false });
+
 	return {
-		user
+		user,
+		resumes: resumes || []
 	};
 };
 
@@ -73,13 +81,25 @@ export const actions: Actions = {
 
 			if (uploadError) {
 				console.error('Upload error:', uploadError);
-				return fail(500, { error: 'Failed to upload resume' });
+				console.error('Upload error details:', JSON.stringify(uploadError, null, 2));
+				// Provide more specific error message
+				const errorMessage = uploadError.message || 'Storage error';
+				return fail(500, { error: `Failed to upload resume: ${errorMessage}` });
 			}
 
 			// Get public URL
 			const { data: { publicUrl } } = supabase.storage
 				.from('resumes')
 				.getPublicUrl(fileName);
+
+			// Check if user already has resumes (for is_default logic)
+			const { data: existingResumes } = await supabase
+				.from('resumes')
+				.select('id')
+				.eq('user_id', user.id)
+				.limit(1);
+
+			const isFirstResume = !existingResumes || existingResumes.length === 0;
 
 			// Create resume record
 			type ResumeInsert = Database['public']['Tables']['resumes']['Insert'];
@@ -89,7 +109,7 @@ export const actions: Actions = {
 					user_id: user.id,
 					profile_id: profile.id,
 					name: file.name,
-					is_default: true,
+					is_default: isFirstResume, // Only first resume is default
 					original_file_url: publicUrl,
 					original_file_name: file.name,
 					original_file_type: file.type.includes('pdf') ? 'pdf' : 'docx'
@@ -119,7 +139,14 @@ export const actions: Actions = {
 				// The resume is saved, parsing can be retried later
 			}
 
-			return { success: true, step: 1 };
+			// Fetch updated list of resumes
+			const { data: allResumes } = await supabase
+				.from('resumes')
+				.select('id, name, original_file_name, created_at')
+				.eq('user_id', user.id)
+				.order('created_at', { ascending: false });
+
+			return { success: true, step: 1, resumes: allResumes || [] };
 		} catch (error) {
 			console.error('Unexpected error:', error);
 			return fail(500, { error: 'An unexpected error occurred' });

@@ -6,9 +6,12 @@
 	import { Textarea } from '$components/ui/textarea';
 	import { Badge } from '$components/ui/badge';
 	import { enhance } from '$app/forms';
-	import { Upload, Link2, Briefcase, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-svelte';
+	import { Upload, Link2, Briefcase, CheckCircle2, ChevronRight, ChevronLeft, FileText, X, Plus } from 'lucide-svelte';
 
 	let { data, form } = $props();
+
+	// Track uploaded resumes - initialize from data and update from form
+	let uploadedResumes = $state(data.resumes || []);
 
 	let currentStep = $state(1);
 	let loading = $state(false);
@@ -48,8 +51,16 @@
 	$effect(() => {
 		if (form?.success) {
 			loading = false;
-			// Move to next step if form submission was successful
-			if (form.step && currentStep < TOTAL_STEPS) {
+			// Update resumes list if we got new data
+			if (form.resumes) {
+				uploadedResumes = form.resumes;
+			}
+			// Reset file input after successful upload
+			if (form.step === 1) {
+				fileName = '';
+			}
+			// Don't auto-advance from step 1 - let user add more resumes
+			if (form.step && form.step > 1 && currentStep < TOTAL_STEPS) {
 				currentStep = form.step + 1;
 			}
 		}
@@ -120,55 +131,101 @@
 
 		<!-- Step Content -->
 		{#if currentStep === 1}
-			<!-- Step 1: Upload Resume -->
+			<!-- Step 1: Upload Resume(s) -->
 			<Card>
 				<CardHeader>
-					<CardTitle>Upload Your Resume</CardTitle>
-					<CardDescription>Upload at least one resume to get started. We support PDF and DOCX formats.</CardDescription>
+					<CardTitle>Upload Your Resume{uploadedResumes.length > 0 ? 's' : ''}</CardTitle>
+					<CardDescription>Upload at least one resume to get started. You can add multiple resumes for different types of roles. We support PDF and DOCX formats.</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form
-						method="POST"
-						action="?/uploadResume"
-						enctype="multipart/form-data"
-						use:enhance={() => {
-							loading = true;
-							return async ({ update }) => {
-								await update();
-							};
-						}}
-					>
-						<div class="space-y-6">
-							<div class="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-								<input
-									type="file"
-									name="resume"
-									id="resume"
-									accept=".pdf,.docx"
-									class="hidden"
-									onchange={handleFileSelect}
-									required
-								/>
-								<label for="resume" class="cursor-pointer">
-									<Upload class="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-									{#if fileName}
-										<p class="text-sm font-medium mb-2">{fileName}</p>
-										<p class="text-xs text-muted-foreground">Click to change file</p>
-									{:else}
-										<p class="text-sm font-medium mb-2">Click to upload or drag and drop</p>
-										<p class="text-xs text-muted-foreground">PDF or DOCX (max 5MB)</p>
-									{/if}
-								</label>
+					<div class="space-y-6">
+						<!-- Show uploaded resumes -->
+						{#if uploadedResumes.length > 0}
+							<div class="space-y-2">
+								<Label>Uploaded Resumes ({uploadedResumes.length})</Label>
+								<div class="space-y-2">
+									{#each uploadedResumes as resume}
+										<div class="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
+											<FileText class="w-5 h-5 text-primary flex-shrink-0" />
+											<div class="flex-1 min-w-0">
+												<p class="text-sm font-medium truncate">{resume.original_file_name || resume.name}</p>
+												<p class="text-xs text-muted-foreground">Uploaded {new Date(resume.created_at).toLocaleDateString()}</p>
+											</div>
+											<CheckCircle2 class="w-5 h-5 text-green-500 flex-shrink-0" />
+										</div>
+									{/each}
+								</div>
 							</div>
+						{/if}
 
-							<div class="flex justify-end">
-								<Button type="submit" disabled={loading || !fileName}>
-									{loading ? 'Uploading...' : 'Continue'}
-									<ChevronRight class="w-4 h-4 ml-2" />
-								</Button>
+						<!-- Upload form -->
+						<form
+							method="POST"
+							action="?/uploadResume"
+							enctype="multipart/form-data"
+							use:enhance={() => {
+								loading = true;
+								return async ({ update }) => {
+									await update();
+								};
+							}}
+						>
+							<div class="space-y-4">
+								<div class="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+									<input
+										type="file"
+										name="resume"
+										id="resume"
+										accept=".pdf,.docx"
+										class="hidden"
+										onchange={handleFileSelect}
+										required
+									/>
+									<label for="resume" class="cursor-pointer">
+										{#if uploadedResumes.length > 0}
+											<Plus class="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+											{#if fileName}
+												<p class="text-sm font-medium mb-1">{fileName}</p>
+												<p class="text-xs text-muted-foreground">Click to change file</p>
+											{:else}
+												<p class="text-sm font-medium mb-1">Add another resume</p>
+												<p class="text-xs text-muted-foreground">Different versions for different roles</p>
+											{/if}
+										{:else}
+											<Upload class="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+											{#if fileName}
+												<p class="text-sm font-medium mb-2">{fileName}</p>
+												<p class="text-xs text-muted-foreground">Click to change file</p>
+											{:else}
+												<p class="text-sm font-medium mb-2">Click to upload or drag and drop</p>
+												<p class="text-xs text-muted-foreground">PDF or DOCX (max 5MB)</p>
+											{/if}
+										{/if}
+									</label>
+								</div>
+
+								<div class="flex justify-between items-center">
+									{#if fileName}
+										<Button type="submit" variant="outline" disabled={loading}>
+											{loading ? 'Uploading...' : 'Upload Resume'}
+											<Upload class="w-4 h-4 ml-2" />
+										</Button>
+									{:else}
+										<div></div>
+									{/if}
+
+									<Button
+										type="button"
+										disabled={uploadedResumes.length === 0}
+										onclick={() => currentStep = 2}
+									>
+										Continue
+										<ChevronRight class="w-4 h-4 ml-2" />
+									</Button>
+								</div>
 							</div>
-						</div>
-					</form>
+						</form>
+					</div>
 				</CardContent>
 			</Card>
 
@@ -322,8 +379,8 @@
 							<div class="flex items-start gap-3">
 								<CheckCircle2 class="w-5 h-5 text-primary mt-0.5" />
 								<div>
-									<p class="font-medium">Resume Uploaded</p>
-									<p class="text-sm text-muted-foreground">We'll use this to match you with relevant jobs</p>
+									<p class="font-medium">{uploadedResumes.length} Resume{uploadedResumes.length !== 1 ? 's' : ''} Uploaded</p>
+									<p class="text-sm text-muted-foreground">We'll use {uploadedResumes.length !== 1 ? 'these' : 'this'} to match you with relevant jobs</p>
 								</div>
 							</div>
 
