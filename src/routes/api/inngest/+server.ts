@@ -1,4 +1,4 @@
-import { serve } from 'inngest/cloudflare';
+import { serve } from 'inngest/sveltekit';
 import { env } from '$env/dynamic/private';
 import {
 	inngest,
@@ -21,52 +21,30 @@ const functions = [
 	syncProfileFromGitHub
 ];
 
-// Use the Cloudflare adapter which properly handles Cloudflare Workers environment
-function createHandler(platformEnv: Record<string, string | undefined> = {}) {
-	// Merge SvelteKit's dynamic env with Cloudflare platform env
-	// This ensures env vars are available both in local dev and production
-	const mergedEnv: Record<string, string | undefined> = {
-		...env,
-		...platformEnv
-	};
-
+// Create the Inngest serve handler
+// The SvelteKit adapter properly handles the RequestEvent and preserves query params
+// signingKey is read at request time via $env/dynamic/private (Cloudflare compatible)
+function getHandler() {
 	return serve({
 		client: inngest,
 		functions,
-		// Signing key from merged environment
-		signingKey: mergedEnv.INNGEST_SIGNING_KEY
+		signingKey: env.INNGEST_SIGNING_KEY
 	});
 }
 
-// Helper to call handler - the Cloudflare adapter's Either type causes TS issues
-// but runtime correctly handles both Pages ({request, env}) and Workers (request, env) formats
-async function callHandler(
-	handler: ReturnType<typeof createHandler>,
-	request: Request,
-	platformEnv: Record<string, string | undefined>
-): Promise<Response> {
-	// Use Pages format: single object with request and env
-	// TypeScript's Either<A,B> intersection is impossible to satisfy statically
-	// but the runtime deriveHandlerArgs() correctly handles this format
-	const context = { request, env: platformEnv };
-	return (handler as (ctx: typeof context) => Promise<Response>)(context);
-}
-
-// Wrap handlers for SvelteKit - convert RequestEvent to Cloudflare format
+// Export the handlers using SvelteKit's pattern
+// The SvelteKit adapter provides GET, POST, PUT methods that accept RequestEvent
 export const GET: RequestHandler = async (event) => {
-	const platformEnv = (event.platform?.env ?? {}) as Record<string, string | undefined>;
-	const handler = createHandler(platformEnv);
-	return callHandler(handler, event.request, platformEnv);
+	const handler = getHandler();
+	return handler.GET(event);
 };
 
 export const POST: RequestHandler = async (event) => {
-	const platformEnv = (event.platform?.env ?? {}) as Record<string, string | undefined>;
-	const handler = createHandler(platformEnv);
-	return callHandler(handler, event.request, platformEnv);
+	const handler = getHandler();
+	return handler.POST(event);
 };
 
 export const PUT: RequestHandler = async (event) => {
-	const platformEnv = (event.platform?.env ?? {}) as Record<string, string | undefined>;
-	const handler = createHandler(platformEnv);
-	return callHandler(handler, event.request, platformEnv);
+	const handler = getHandler();
+	return handler.PUT(event);
 };
