@@ -1,4 +1,4 @@
-import { serve } from 'inngest/sveltekit';
+import { serve } from 'inngest/cloudflare';
 import { env } from '$env/dynamic/private';
 import {
 	inngest,
@@ -21,30 +21,52 @@ const functions = [
 	syncProfileFromGitHub
 ];
 
-// Create handler lazily at request time to ensure env vars are available
-// This is required for Cloudflare Workers where env vars aren't available at module load
-function createHandler() {
+// Use the Cloudflare adapter which properly handles Cloudflare Workers environment
+function createHandler(platformEnv: Record<string, string | undefined> = {}) {
+	// Merge SvelteKit's dynamic env with Cloudflare platform env
+	// This ensures env vars are available both in local dev and production
+	const mergedEnv: Record<string, string | undefined> = {
+		...env,
+		...platformEnv
+	};
+
 	return serve({
 		client: inngest,
 		functions,
-		// Signing key is required for production
-		// Read at request time when env vars are available
-		signingKey: env.INNGEST_SIGNING_KEY || undefined
+		// Signing key from merged environment
+		signingKey: mergedEnv.INNGEST_SIGNING_KEY
 	});
 }
 
-// Wrap handlers to create them at request time
-export const GET: RequestHandler = (event) => {
-	const handler = createHandler();
-	return handler.GET(event);
+// Helper to call handler - the Cloudflare adapter's Either type causes TS issues
+// but runtime correctly handles both Pages ({request, env}) and Workers (request, env) formats
+async function callHandler(
+	handler: ReturnType<typeof createHandler>,
+	request: Request,
+	platformEnv: Record<string, string | undefined>
+): Promise<Response> {
+	// Use Pages format: single object with request and env
+	// TypeScript's Either<A,B> intersection is impossible to satisfy statically
+	// but the runtime deriveHandlerArgs() correctly handles this format
+	const context = { request, env: platformEnv };
+	return (handler as (ctx: typeof context) => Promise<Response>)(context);
+}
+
+// Wrap handlers for SvelteKit - convert RequestEvent to Cloudflare format
+export const GET: RequestHandler = async (event) => {
+	const platformEnv = (event.platform?.env ?? {}) as Record<string, string | undefined>;
+	const handler = createHandler(platformEnv);
+	return callHandler(handler, event.request, platformEnv);
 };
 
-export const POST: RequestHandler = (event) => {
-	const handler = createHandler();
-	return handler.POST(event);
+export const POST: RequestHandler = async (event) => {
+	const platformEnv = (event.platform?.env ?? {}) as Record<string, string | undefined>;
+	const handler = createHandler(platformEnv);
+	return callHandler(handler, event.request, platformEnv);
 };
 
-export const PUT: RequestHandler = (event) => {
-	const handler = createHandler();
-	return handler.PUT(event);
+export const PUT: RequestHandler = async (event) => {
+	const platformEnv = (event.platform?.env ?? {}) as Record<string, string | undefined>;
+	const handler = createHandler(platformEnv);
+	return callHandler(handler, event.request, platformEnv);
 };
