@@ -9,7 +9,8 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 			profileCompletion: 0,
 			resumeCount: 0,
 			generatedCount: 0,
-			usage: null
+			usage: null,
+			parsingResumes: []
 		};
 	}
 
@@ -31,7 +32,8 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 		profile,
 		resumes,
 		applications,
-		usage
+		usage,
+		parsingResumes
 	] = await Promise.all([
 		supabase
 			.from('jobs')
@@ -75,7 +77,14 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 			.select('*')
 			.eq('user_id', user.id)
 			.eq('week_start_date', weekStart.toISOString().split('T')[0])
-			.single()
+			.single(),
+
+		// Check if any resumes are currently being parsed (have no parsed_content yet)
+		supabase
+			.from('resumes')
+			.select('id, name, original_file_name')
+			.eq('user_id', user.id)
+			.is('parsed_content', null)
 	]);
 
 	// Calculate profile completion
@@ -140,6 +149,8 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 		profileCompletion,
 		resumeCount: resumes.count || 0,
 		generatedCount: applications.count || 0,
-		usage: usage.data || null
+		usage: usage.data || null,
+		// Resume parsing status - show loading indicator if any resumes are being parsed
+		parsingResumes: parsingResumes.data || []
 	};
 };

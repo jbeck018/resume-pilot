@@ -23,9 +23,12 @@ const handler = serve({
 		sendWeeklySummaries,
 		syncProfileFromGitHub
 	],
-	signingKey: env.INNGEST_SIGNING_KEY
+	// Signing key is required for production
+	// If not set, Inngest will reject function execution requests
+	signingKey: env.INNGEST_SIGNING_KEY || undefined
 });
 
+// Wrap handlers to ensure they work on Cloudflare Workers
 export const GET = handler.GET;
 export const POST = handler.POST;
 export const PUT = handler.PUT;

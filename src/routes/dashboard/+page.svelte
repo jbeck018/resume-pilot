@@ -9,6 +9,7 @@
 		CheckCircle,
 		Clock,
 		FileText,
+		Loader2,
 		RefreshCw,
 		TrendingUp,
 		XCircle
@@ -35,6 +36,27 @@
 			Find Jobs Now
 		</Button>
 	</div>
+
+	<!-- Resume Parsing Status Indicator -->
+	{#if data.parsingResumes && data.parsingResumes.length > 0}
+		<div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
+			<div class="flex items-center gap-3">
+				<Loader2 class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
+				<div class="flex-1">
+					<p class="font-medium text-blue-800 dark:text-blue-200">
+						Processing your resume{data.parsingResumes.length > 1 ? 's' : ''}...
+					</p>
+					<p class="text-sm text-blue-600 dark:text-blue-400">
+						{#if data.parsingResumes.length === 1}
+							Analyzing "{data.parsingResumes[0].original_file_name || data.parsingResumes[0].name}" to extract your skills and experience
+						{:else}
+							Analyzing {data.parsingResumes.length} resumes to extract your skills and experience
+						{/if}
+					</p>
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Stats -->
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
