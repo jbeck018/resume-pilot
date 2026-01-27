@@ -9,26 +9,42 @@ import {
 	sendWeeklySummaries,
 	syncProfileFromGitHub
 } from '$lib/server/inngest';
+import type { RequestHandler } from './$types';
 
-// Serve the Inngest API endpoint
-// Note: signingKey must be passed explicitly for Cloudflare Workers
-// because process.env is not available
-const handler = serve({
-	client: inngest,
-	functions: [
-		dailyJobDiscovery,
-		scheduleDailyDiscovery,
-		generateResumeForJob,
-		parseResumeFile,
-		sendWeeklySummaries,
-		syncProfileFromGitHub
-	],
-	// Signing key is required for production
-	// If not set, Inngest will reject function execution requests
-	signingKey: env.INNGEST_SIGNING_KEY || undefined
-});
+// Functions array - defined at module level since these don't need env vars
+const functions = [
+	dailyJobDiscovery,
+	scheduleDailyDiscovery,
+	generateResumeForJob,
+	parseResumeFile,
+	sendWeeklySummaries,
+	syncProfileFromGitHub
+];
 
-// Wrap handlers to ensure they work on Cloudflare Workers
-export const GET = handler.GET;
-export const POST = handler.POST;
-export const PUT = handler.PUT;
+// Create handler lazily at request time to ensure env vars are available
+// This is required for Cloudflare Workers where env vars aren't available at module load
+function createHandler() {
+	return serve({
+		client: inngest,
+		functions,
+		// Signing key is required for production
+		// Read at request time when env vars are available
+		signingKey: env.INNGEST_SIGNING_KEY || undefined
+	});
+}
+
+// Wrap handlers to create them at request time
+export const GET: RequestHandler = (event) => {
+	const handler = createHandler();
+	return handler.GET(event);
+};
+
+export const POST: RequestHandler = (event) => {
+	const handler = createHandler();
+	return handler.POST(event);
+};
+
+export const PUT: RequestHandler = (event) => {
+	const handler = createHandler();
+	return handler.PUT(event);
+};
