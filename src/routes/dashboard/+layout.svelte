@@ -13,7 +13,8 @@
 		User,
 		ClipboardList,
 		X,
-		Shield
+		Shield,
+		Sparkles
 	} from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import { toggleMode, mode } from 'mode-watcher';
@@ -24,6 +25,7 @@
 
 	const baseNavItems = [
 		{ href: '/dashboard', label: 'Dashboard', icon: Home },
+		{ href: '/dashboard/builder', label: 'Resume Builder', icon: Sparkles },
 		{ href: '/dashboard/jobs', label: 'Jobs', icon: Briefcase },
 		{ href: '/dashboard/applications', label: 'Applications', icon: ClipboardList },
 		{ href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },

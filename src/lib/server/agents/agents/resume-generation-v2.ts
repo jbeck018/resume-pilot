@@ -790,7 +790,7 @@ export class ResumeGenerationAgentV2 extends BaseAgent<
 
 		try {
 			// Import the library storage function
-			const { storeResumeInLibrary } = await import('../../resume-library/storage');
+			const { storeResumeInLibrary } = await import('../resume-library/storage');
 
 			await storeResumeInLibrary({
 				userId: context.userId,

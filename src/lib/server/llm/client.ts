@@ -35,7 +35,7 @@ function getLangfuse(): Langfuse | null {
 }
 
 // Create providers with Cloudflare AI Gateway (if configured)
-function getAnthropicProvider() {
+export function getAnthropicProvider() {
 	const baseURL = CLOUDFLARE_AI_GATEWAY_URL
 		? `${CLOUDFLARE_AI_GATEWAY_URL}/anthropic`
 		: undefined;
