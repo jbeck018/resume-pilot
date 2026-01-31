@@ -21,6 +21,7 @@
     "db:run": "npx tsx scripts/run-migration.ts",
     "inngest:dev": "npx inngest-cli@latest dev",
     "prompts:seed": "npx tsx src/lib/server/llm/prompts/seed-prompts.ts",
+    "test:resume-v2": "npx tsx src/lib/server/agents/tests/test-resume-v2.ts",
     "docker:dev": "docker-compose up -d",
     "docker:dev:build": "docker-compose up -d --build",
     "docker:dev:logs": "docker-compose logs -f app",

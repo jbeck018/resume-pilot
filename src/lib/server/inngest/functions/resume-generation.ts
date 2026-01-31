@@ -1,18 +1,24 @@
 import { inngest } from '../client';
-import { generateApplication, type ApplicationGenerationInput } from '$lib/server/agents/orchestrator';
 import { BudgetExceededError } from '$lib/server/llm/budget';
 import { createServerClient } from '@supabase/ssr';
 import { env as publicEnv } from '$env/dynamic/public';
 import { env } from '$env/dynamic/private';
 import { usageService } from '$lib/server/subscription';
-import { UsageLimitExceededError } from '$lib/server/subscription/errors';
 import {
 	sendResumeReadyEmail,
 	shouldSendEmail,
 	parseEmailPreferences
 } from '$lib/server/email';
+import { Langfuse } from 'langfuse';
+import {
+	resumeGenerationAgentV2,
+	type ResumeAgentInputV2,
+	type ResumeAgentOutputV2
+} from '$lib/server/agents/agents/resume-generation-v2';
+import type { AgentContext, ProfileInfo, ExperienceItem, EducationItem } from '$lib/server/agents/types';
 
-// Resume generation workflow using agentic orchestrator
+// Resume generation workflow using ResumeGenerationAgentV2
+// V2 features: 6-phase pipeline, gap analysis, confidence scoring, library patterns, reframing strategies
 export const generateResumeForJob = inngest.createFunction(
 	{
 		id: 'generate-resume-for-job',
@@ -107,13 +113,74 @@ export const generateResumeForJob = inngest.createFunction(
 			};
 		});
 
-		// Step 3: Generate application using agentic orchestrator
-		// This coordinates ResumeAgent, CoverLetterAgent, and JobMatchAgent
-		// All traced via Langfuse with proper hierarchy
-		const applicationResult = await step.run('generate-application', async () => {
+		// Step 3: Generate resume using V2 agent with enhanced gap analysis and confidence scoring
+		// Uses the 6-phase pipeline: Library Init -> Research -> Template -> Discovery -> Assembly -> Generation
+		const applicationResult = await step.run('generate-resume-v2', async (): Promise<{
+			resume: ResumeAgentOutputV2;
+			traceId: string;
+			costCents: number;
+			durationMs: number;
+		}> => {
 			try {
-				const input: ApplicationGenerationInput = {
+				// Initialize Langfuse for tracing
+				const langfuse = new Langfuse({
+					publicKey: env.LANGFUSE_PUBLIC_KEY!,
+					secretKey: env.LANGFUSE_SECRET_KEY!,
+					baseUrl: env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+				});
+
+				// Create trace for this generation
+				const trace = langfuse.trace({
+					name: 'resume-generation-v2',
 					userId,
+					metadata: {
+						jobId,
+						applicationId,
+						company: job.company,
+						position: job.title
+					}
+				});
+
+				// Build the agent context
+				const agentContext: AgentContext = {
+					userId,
+					jobId,
+					applicationId,
+					trace
+				};
+
+				// Map profile data to V2 format
+				const profileInfo: ProfileInfo = {
+					id: profile.id,
+					fullName: profile.full_name || '',
+					email: profile.email,
+					headline: profile.headline || '',
+					summary: profile.summary || '',
+					skills: profile.skills || [],
+					experience: (profile.experience || []).map((exp: Record<string, unknown>): ExperienceItem => ({
+						title: exp.title as string,
+						company: exp.company as string,
+						description: exp.description as string,
+						startDate: exp.start_date as string,
+						endDate: exp.end_date as string | undefined,
+						current: exp.current as boolean,
+						location: exp.location as string | undefined,
+						skills: exp.skills as string[] | undefined
+					})),
+					education: (profile.education || []).map((edu: Record<string, unknown>): EducationItem => ({
+						institution: edu.institution as string,
+						degree: edu.degree as string,
+						field: edu.field as string | undefined,
+						startDate: edu.start_date as string | undefined,
+						endDate: edu.end_date as string | undefined
+					})),
+					location: profile.location,
+					minSalary: profile.min_salary ?? undefined,
+					maxSalary: profile.max_salary ?? undefined
+				};
+
+				// Build V2 agent input
+				const agentInput: ResumeAgentInputV2 = {
 					job: {
 						id: jobId,
 						title: job.title,
@@ -124,34 +191,7 @@ export const generateResumeForJob = inngest.createFunction(
 						isRemote: job.is_remote,
 						sourceUrl: job.source_url || ''
 					},
-					profile: {
-						id: profile.id,
-						fullName: profile.full_name || '',
-						email: profile.email,
-						headline: profile.headline || '',
-						summary: profile.summary || '',
-						skills: profile.skills || [],
-						experience: (profile.experience || []).map((exp: Record<string, unknown>) => ({
-							title: exp.title as string,
-							company: exp.company as string,
-							description: exp.description as string,
-							startDate: exp.start_date as string,
-							endDate: exp.end_date as string | undefined,
-							current: exp.current as boolean,
-							location: exp.location as string | undefined,
-							skills: exp.skills as string[] | undefined
-						})),
-						education: (profile.education || []).map((edu: Record<string, unknown>) => ({
-							institution: edu.institution as string,
-							degree: edu.degree as string,
-							field: edu.field as string | undefined,
-							startDate: edu.start_date as string | undefined,
-							endDate: edu.end_date as string | undefined
-						})),
-						location: profile.location,
-						minSalary: profile.min_salary ?? undefined,
-						maxSalary: profile.max_salary ?? undefined
-					},
+					profile: profileInfo,
 					resume: resume
 						? {
 								id: resume.id,
@@ -161,12 +201,29 @@ export const generateResumeForJob = inngest.createFunction(
 						: undefined,
 					options: {
 						includeResearch: true,
-						generateCoverLetter: true,
-						tone: 'conversational'
+						useLibrary: true,
+						enableDiscovery: false, // Disabled for async generation
+						qualityThreshold: 70,
+						maxRegenerationAttempts: 2
 					}
 				};
 
-				return await generateApplication(input);
+				// Execute the V2 agent
+				const result = await resumeGenerationAgentV2.execute(agentInput, agentContext);
+
+				// Ensure Langfuse data is flushed
+				await langfuse.flushAsync();
+
+				if (!result.success || !result.data) {
+					throw new Error(result.error || 'Resume generation failed');
+				}
+
+				return {
+					resume: result.data,
+					traceId: result.traceId,
+					costCents: result.costCents,
+					durationMs: result.durationMs
+				};
 			} catch (error) {
 				if (error instanceof BudgetExceededError) {
 					// Budget exceeded - mark application as budget_exceeded
@@ -175,24 +232,91 @@ export const generateResumeForJob = inngest.createFunction(
 						.update({ status: 'budget_exceeded', updated_at: new Date().toISOString() })
 						.eq('id', applicationId);
 				}
-				console.error('Application generation failed:', error);
+				console.error('Resume generation V2 failed:', error);
 				throw error;
 			}
 		});
 
-		// Step 4: Update application with generated content
+		// Step 4: Update application with generated content (V2 enhanced fields)
 		await step.run('save-application', async () => {
+			const resumeData = applicationResult.resume;
+
+			// Build confidence score JSONB
+			const confidenceScore = {
+				matchScore: resumeData.matchScore,
+				atsScore: resumeData.atsScore,
+				qualityScore: resumeData.qualityScore,
+				generationAttempts: resumeData.generationAttempts,
+				metadata: resumeData.metadata
+			};
+
+			// Build matched requirements JSONB (simplified for storage)
+			const matchedRequirements = resumeData.matchedRequirements.map((req) => ({
+				requirementId: req.requirementId,
+				requirement: req.requirement,
+				confidence: {
+					overall: req.confidence.overall,
+					tier: req.confidence.tier,
+					breakdown: req.confidence.breakdown
+				},
+				selectedContent: req.selectedContent,
+				hasReframing: !!req.reframingStrategy
+			}));
+
+			// Build assembly plan JSONB (simplified for storage)
+			const assemblyPlan = {
+				jobId: resumeData.assemblyPlan.jobId,
+				gapsCount: resumeData.assemblyPlan.gaps.length,
+				reframingCount: resumeData.assemblyPlan.reframingPlan.length,
+				coverLetterRecommendationsCount: resumeData.assemblyPlan.coverLetterRecommendations.length
+			};
+
+			// Build reframing strategies JSONB
+			const reframingStrategies = resumeData.matchedRequirements
+				.filter((req) => req.reframingStrategy)
+				.map((req) => ({
+					requirementId: req.requirementId,
+					type: req.reframingStrategy!.type,
+					originalText: req.reframingStrategy!.originalText,
+					reframedText: req.reframingStrategy!.reframedText,
+					preservedMeaning: req.reframingStrategy!.preservedMeaning
+				}));
+
+			// Build cover letter recommendations JSONB
+			const coverLetterRecommendations = resumeData.assemblyPlan.coverLetterRecommendations.map((rec) => ({
+				gapId: rec.gapId,
+				recommendation: rec.recommendation,
+				suggestedPhrasing: rec.suggestedPhrasing,
+				placement: rec.placement
+			}));
+
+			// Extract matched skills from V2 data
+			const matchedSkills = resumeData.matchedRequirements
+				.filter((req) => req.confidence.tier === 'direct' || req.confidence.tier === 'transferable')
+				.map((req) => req.requirement);
+
+			// Extract gaps as strings for backward compatibility
+			const skillGaps = resumeData.gaps
+				.filter((gap) => gap.severity !== 'minor')
+				.map((gap) => `${gap.requirement} (${gap.severity}): ${gap.mitigationStrategies[0]?.description || 'No mitigation'}`);
+
 			const { error } = await supabase
 				.from('job_applications')
 				.update({
-					tailored_resume: applicationResult.resume.resume,
-					cover_letter: applicationResult.coverLetter?.coverLetter || null,
-					match_score: applicationResult.matchScore.overallScore,
-					ats_score: applicationResult.resume.atsScore,
-					matched_skills: applicationResult.resume.matchedSkills,
-					skill_gaps: applicationResult.resume.gaps,
-					generation_cost: applicationResult.totalCostCents / 100, // Convert cents to dollars
+					tailored_resume: resumeData.resume,
+					cover_letter: null, // V2 doesn't generate cover letter in resume agent
+					match_score: resumeData.matchScore,
+					ats_score: resumeData.atsScore,
+					matched_skills: matchedSkills,
+					skill_gaps: skillGaps,
+					generation_cost: applicationResult.costCents / 100, // Convert cents to dollars
 					langfuse_trace_id: applicationResult.traceId,
+					// V2 enhanced fields (JSONB)
+					confidence_score: confidenceScore,
+					matched_requirements: matchedRequirements,
+					assembly_plan: assemblyPlan,
+					reframing_strategies: reframingStrategies,
+					cover_letter_recommendations: coverLetterRecommendations,
 					status: 'ready',
 					updated_at: new Date().toISOString()
 				})
@@ -217,6 +341,8 @@ export const generateResumeForJob = inngest.createFunction(
 				return { sent: false, reason: 'user_opted_out' };
 			}
 
+			const resumeData = applicationResult.resume;
+
 			try {
 				const result = await sendResumeReadyEmail(
 					profile.email,
@@ -225,8 +351,8 @@ export const generateResumeForJob = inngest.createFunction(
 					jobId,
 					job.title,
 					job.company,
-					applicationResult.matchScore.overallScore,
-					applicationResult.resume.atsScore
+					resumeData.matchScore,
+					resumeData.atsScore
 				);
 
 				// Log email send to history
@@ -242,8 +368,9 @@ export const generateResumeForJob = inngest.createFunction(
 						jobId,
 						jobTitle: job.title,
 						company: job.company,
-						matchScore: applicationResult.matchScore.overallScore,
-						atsScore: applicationResult.resume.atsScore
+						matchScore: resumeData.matchScore,
+						atsScore: resumeData.atsScore,
+						qualityScore: resumeData.qualityScore
 					}
 				});
 
@@ -258,16 +385,26 @@ export const generateResumeForJob = inngest.createFunction(
 			}
 		});
 
+		const resumeData = applicationResult.resume;
+
 		return {
 			success: true,
 			jobId,
 			applicationId,
-			matchScore: applicationResult.matchScore.overallScore,
-			atsScore: applicationResult.resume.atsScore,
-			resumeLength: applicationResult.resume.resume.length,
-			coverLetterLength: applicationResult.coverLetter?.coverLetter.length || 0,
-			totalCost: applicationResult.totalCostCents / 100,
-			totalDurationMs: applicationResult.totalDurationMs,
+			// V2 enhanced response
+			matchScore: resumeData.matchScore,
+			atsScore: resumeData.atsScore,
+			qualityScore: resumeData.qualityScore,
+			resumeLength: resumeData.resume.length,
+			coverLetterLength: 0, // V2 resume agent doesn't generate cover letter
+			highlights: resumeData.highlights,
+			gapsCount: resumeData.gaps.length,
+			matchedRequirementsCount: resumeData.matchedRequirements.length,
+			generationAttempts: resumeData.generationAttempts,
+			libraryPatternsApplied: resumeData.libraryPatternsApplied?.length || 0,
+			totalCost: applicationResult.costCents / 100,
+			totalDurationMs: applicationResult.durationMs,
+			phaseDurations: resumeData.metadata,
 			traceId: applicationResult.traceId,
 			emailSent: emailResult.sent
 		};
