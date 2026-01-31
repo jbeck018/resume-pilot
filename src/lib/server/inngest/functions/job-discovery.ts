@@ -51,7 +51,11 @@ const EMBEDDING_DIMENSIONS = 1536;
 export const dailyJobDiscovery = inngest.createFunction(
 	{
 		id: 'daily-job-discovery',
-		name: 'Daily Job Discovery'
+		name: 'Daily Job Discovery',
+		retries: 3,
+		concurrency: {
+			limit: 5 // Limit concurrent job discovery runs
+		}
 	},
 	{ event: 'job/discovery.requested' },
 	async ({ event, step }) => {
@@ -613,7 +617,8 @@ export const dailyJobDiscovery = inngest.createFunction(
 export const scheduleDailyDiscovery = inngest.createFunction(
 	{
 		id: 'schedule-daily-discovery',
-		name: 'Schedule Daily Discovery'
+		name: 'Schedule Daily Discovery',
+		retries: 2
 	},
 	{ cron: '0 6 * * *' }, // Run at 6 AM UTC daily
 	async ({ step }) => {

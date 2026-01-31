@@ -42,6 +42,7 @@ export type Events = {
 			userId: string;
 			jobId: string;
 			applicationId: string;
+			skipUsageCheck?: boolean;
 		};
 	};
 	'resume/parsing.requested': {
