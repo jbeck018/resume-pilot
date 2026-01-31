@@ -17,11 +17,14 @@ export function getInngest(eventKey?: string): Inngest {
 	return _inngest;
 }
 
-// For backwards compatibility - creates client without event key
-// The event key will be set when serve() is called with the signing key
+// For backwards compatibility - creates client without explicit event key
+// The Inngest SDK automatically reads INNGEST_EVENT_KEY from environment variables
+// This works on all platforms including Cloudflare Workers/Pages
 export const inngest = new Inngest({
 	id: 'resume-pilot',
 	isDev: false
+	// Note: eventKey is automatically detected from INNGEST_EVENT_KEY env var
+	// No need to explicitly pass it here
 });
 
 // Define event types for type safety

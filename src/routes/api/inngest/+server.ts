@@ -29,15 +29,15 @@ const functions = [
  *
  * The fix: Use the inngest/cloudflare adapter with a custom Request that has
  * the full URL from SvelteKit's event.url (which always has query params).
+ *
+ * Note: Event key is handled via the Inngest client constructor or the
+ * INNGEST_EVENT_KEY environment variable - it's not a serve() option.
  */
 function getHandler() {
 	return serve({
 		client: inngest,
 		functions,
 		signingKey: env.INNGEST_SIGNING_KEY,
-		// Event key is required for step.sendEvent() to work on Cloudflare Workers
-		// Without this, sending events from within functions will fail
-		eventKey: env.INNGEST_EVENT_KEY,
 		servePath: '/api/inngest'
 	});
 }

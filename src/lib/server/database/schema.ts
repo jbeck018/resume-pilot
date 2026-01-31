@@ -704,3 +704,175 @@ export type AdminAction =
 	| 'update_user'
 	| 'delete_user'
 	| 'system_setting_change';
+
+// ============================================================================
+// Resume Library (V2 System)
+// ============================================================================
+
+export const resumeLibrary = pgTable(
+	'resume_library',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => profiles.id, { onDelete: 'cascade' }),
+		jobId: uuid('job_id').references(() => jobs.id, { onDelete: 'set null' }),
+
+		// Resume content
+		resumeContent: text('resume_content').notNull(),
+		resumeHash: varchar('resume_hash', { length: 64 }).notNull(),
+
+		// Scoring metrics
+		matchScore: integer('match_score').notNull(),
+		atsScore: integer('ats_score').notNull(),
+		confidenceScore: jsonb('confidence_score').$type<ConfidenceScore>().notNull(),
+
+		// Analysis results
+		matchedRequirements: jsonb('matched_requirements').$type<string[]>().notNull(),
+		gaps: jsonb('gaps').$type<string[]>(),
+		reframingStrategies: jsonb('reframing_strategies').$type<ReframingStrategy[]>(),
+
+		// Outcome tracking
+		outcome: jsonb('outcome').$type<ResumeOutcome>(),
+
+		// Job metadata (denormalized for search)
+		jobTitle: varchar('job_title', { length: 500 }),
+		company: varchar('company', { length: 255 }),
+		industry: varchar('industry', { length: 100 }),
+
+		// Vector embedding for similarity search
+		embedding: vector('embedding', { dimensions: 1536 }),
+
+		// Timestamps
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(table) => [
+		index('idx_resume_library_user_id').on(table.userId),
+		index('idx_resume_library_hash').on(table.resumeHash),
+		index('idx_resume_library_scores').on(table.matchScore, table.atsScore),
+		index('idx_resume_library_created_at').on(table.createdAt)
+	]
+);
+
+// ============================================================================
+// Experience Discovery Sessions (V2 System)
+// ============================================================================
+
+export const experienceDiscoverySessions = pgTable(
+	'experience_discovery_sessions',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => profiles.id, { onDelete: 'cascade' }),
+
+		// Associated job postings
+		jobIds: jsonb('job_ids').$type<string[]>().notNull(),
+
+		// Session status
+		status: varchar('status', { length: 50 })
+			.$type<DiscoverySessionStatus>()
+			.notNull()
+			.default('pending'),
+
+		// Generated questions
+		questions: jsonb('questions').$type<DiscoveryQuestion[]>().notNull(),
+
+		// User responses
+		responses: jsonb('responses').$type<DiscoveryResponse[]>().default([]),
+
+		// Extracted experiences
+		discoveredExperiences: jsonb('discovered_experiences')
+			.$type<DiscoveredExperience[]>()
+			.default([]),
+
+		// Timestamps
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+		completedAt: timestamp('completed_at', { withTimezone: true })
+	},
+	(table) => [
+		index('idx_discovery_sessions_user_id').on(table.userId),
+		index('idx_discovery_sessions_status').on(table.status),
+		index('idx_discovery_sessions_created_at').on(table.createdAt)
+	]
+);
+
+// ============================================================================
+// Resume Library Relations
+// ============================================================================
+
+export const resumeLibraryRelations = relations(resumeLibrary, ({ one }) => ({
+	profile: one(profiles, {
+		fields: [resumeLibrary.userId],
+		references: [profiles.id]
+	}),
+	job: one(jobs, {
+		fields: [resumeLibrary.jobId],
+		references: [jobs.id]
+	})
+}));
+
+export const experienceDiscoverySessionsRelations = relations(
+	experienceDiscoverySessions,
+	({ one }) => ({
+		profile: one(profiles, {
+			fields: [experienceDiscoverySessions.userId],
+			references: [profiles.id]
+		})
+	})
+);
+
+// ============================================================================
+// Resume Library Types
+// ============================================================================
+
+export type ConfidenceScore = {
+	overall: number;
+	skillsMatch: number;
+	experienceMatch: number;
+	educationMatch: number;
+	keywordsMatch: number;
+};
+
+export type ReframingStrategy = {
+	originalText: string;
+	reframedText: string;
+	reasoning: string;
+	targetKeywords: string[];
+};
+
+export type ResumeOutcome = {
+	applied: boolean;
+	appliedAt?: string;
+	response?: 'interview' | 'rejection' | 'offer' | 'no_response';
+	responseAt?: string;
+	notes?: string;
+};
+
+export type DiscoverySessionStatus = 'pending' | 'in_progress' | 'completed' | 'abandoned';
+
+export type DiscoveryQuestion = {
+	id: string;
+	category: string; // 'experience', 'skills', 'achievements', 'projects'
+	question: string;
+	context?: string; // Why this question is being asked
+	relatedRequirements?: string[]; // Job requirements this helps address
+};
+
+export type DiscoveryResponse = {
+	questionId: string;
+	answer: string;
+	answeredAt: string;
+};
+
+export type DiscoveredExperience = {
+	id: string;
+	type: 'experience' | 'skill' | 'achievement' | 'project';
+	title: string;
+	description: string;
+	relatedSkills?: string[];
+	metrics?: string[];
+	sourceQuestionIds: string[]; // Which questions led to this discovery
+};
