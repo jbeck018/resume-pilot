@@ -36,6 +36,9 @@ function getHandler() {
 		client: inngest,
 		functions,
 		signingKey: env.INNGEST_SIGNING_KEY,
+		// Event key is required for step.sendEvent() to work on Cloudflare Workers
+		// Without this, sending events from within functions will fail
+		eventKey: env.INNGEST_EVENT_KEY,
 		servePath: '/api/inngest'
 	});
 }
