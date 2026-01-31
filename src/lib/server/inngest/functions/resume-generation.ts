@@ -113,6 +113,14 @@ export const generateResumeForJob = inngest.createFunction(
 			};
 		});
 
+		// Validate required data before proceeding
+		if (!job) {
+			throw new Error('Job data not found');
+		}
+		if (!profile) {
+			throw new Error('Profile data not found');
+		}
+
 		// Step 3: Generate resume using V2 agent with enhanced gap analysis and confidence scoring
 		// Uses the 6-phase pipeline: Library Init -> Research -> Template -> Discovery -> Assembly -> Generation
 		const applicationResult = await step.run('generate-resume-v2', async (): Promise<{

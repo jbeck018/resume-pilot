@@ -80,6 +80,7 @@
     "mammoth": "^1.11.0",
     "mode-watcher": "^0.5.1",
     "postgres": "^3.4.5",
+    "recursive-llm-ts": "^4.3.5",
     "resend": "^6.8.0",
     "stripe": "^17.5.0",
     "svelte-sonner": "^0.3.28",

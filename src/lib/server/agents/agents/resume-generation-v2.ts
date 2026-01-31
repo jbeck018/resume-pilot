@@ -30,6 +30,9 @@ import { ContentReframerTool } from '../tools/content-reframer';
 import { QualityScorerTool } from '../tools/quality-scorer';
 import { LibrarySearchTool } from '../tools/library-search';
 
+// Import utilities
+import { selectRelevantContent, type SmartContextResult } from '../utils/smart-context';
+
 // =============================================================================
 // Input/Output Types
 // =============================================================================
@@ -891,6 +894,15 @@ export class ResumeGenerationAgentV2 extends BaseAgent<
 		return Math.max(0, Math.round(rawScore - gapPenalty));
 	}
 
+	/**
+	 * Truncate text to a maximum length with ellipsis
+	 */
+	private truncateText(text: string | undefined | null, maxLength: number): string {
+		if (!text) return '';
+		if (text.length <= maxLength) return text;
+		return text.slice(0, maxLength - 3) + '...';
+	}
+
 	private async generateResumeMarkdown(
 		input: ResumeAgentInputV2,
 		researchData: {
@@ -940,51 +952,74 @@ Output the resume in clean markdown format.`
 			})
 			.join('\n');
 
+		// Use smart context selection to prioritize relevant content and prevent context length errors (error 1102)
+		const smartContext = selectRelevantContent(
+			input.profile,
+			researchData.extractedSkills,
+			input.job.description || '',
+			{
+				maxJobDescriptionLength: 6000,
+				maxExperiences: 6,
+				maxExperienceDescriptionLength: 800,
+				maxSkills: 40,
+				maxEducation: 3,
+				minRelevanceScore: 0.15
+			}
+		);
+
+		// Log context selection stats for debugging
+		if (smartContext.stats.averageRelevanceScore < 0.3) {
+			console.warn('Low relevance match between profile and job requirements:', {
+				avgScore: smartContext.stats.averageRelevanceScore,
+				selectedExperiences: smartContext.stats.selectedExperienceCount
+			});
+		}
+
 		const userPrompt = `# Job Details
-**Position:** ${input.job.title}
-**Company:** ${input.job.company}
+**Position:** ${input.job.title || 'Not specified'}
+**Company:** ${input.job.company || 'Not specified'}
 ${input.job.location ? `**Location:** ${input.job.location}${input.job.isRemote ? ' (Remote)' : ''}` : ''}
 
 **Description:**
-${input.job.description}
+${smartContext.jobDescription || 'No description provided'}
 
 ${researchData.companyResearch ? `
 # Company Research
 **Industry:** ${researchData.companyResearch.industry || 'N/A'}
-**Culture:** ${researchData.companyResearch.culture?.join(', ') || 'N/A'}
-**Technologies:** ${researchData.companyResearch.technologies?.join(', ') || 'N/A'}
-**Values:** ${researchData.companyResearch.values?.join(', ') || 'N/A'}
+**Culture:** ${researchData.companyResearch.culture?.slice(0, 5).join(', ') || 'N/A'}
+**Technologies:** ${researchData.companyResearch.technologies?.slice(0, 10).join(', ') || 'N/A'}
+**Values:** ${researchData.companyResearch.values?.slice(0, 5).join(', ') || 'N/A'}
 ` : ''}
 
 # Candidate Profile
-**Name:** ${input.profile.fullName}
+**Name:** ${input.profile.fullName || 'Candidate'}
 ${input.profile.email ? `**Email:** ${input.profile.email}` : ''}
 ${input.profile.location ? `**Location:** ${input.profile.location}` : ''}
 **Headline:** ${input.profile.headline || 'Professional'}
 
 **Summary:**
-${input.profile.summary || 'Not provided'}
+${this.truncateText(input.profile.summary, 1000) || 'Not provided'}
 
-**Skills:** ${input.profile.skills.join(', ')}
+**Skills (Prioritized by Relevance):** ${smartContext.skills.join(', ') || 'Not specified'}
 
-**Experience:**
-${input.profile.experience
+**Experience (Most Relevant):**
+${smartContext.experiences
 	.map(
 		(exp) => `
-### ${exp.title} at ${exp.company}
-${exp.startDate} - ${exp.current ? 'Present' : exp.endDate || 'N/A'}
+### ${exp.title || 'Position'} at ${exp.company || 'Company'}
+${exp.startDate || 'N/A'} - ${exp.current ? 'Present' : exp.endDate || 'N/A'}
 ${exp.location ? `Location: ${exp.location}` : ''}
 ${exp.description || ''}
-${exp.skills?.length ? `Technologies: ${exp.skills.join(', ')}` : ''}
+${exp.skills?.length ? `Technologies: ${exp.skills.slice(0, 10).join(', ')}` : ''}
 `
 	)
 	.join('\n')}
 
 **Education:**
-${input.profile.education
+${smartContext.education
 	.map(
 		(edu) => `
-- ${edu.degree}${edu.field ? ` in ${edu.field}` : ''} - ${edu.institution}
+- ${edu.degree || 'Degree'}${edu.field ? ` in ${edu.field}` : ''} - ${edu.institution || 'Institution'}
   ${edu.startDate || ''} - ${edu.endDate || ''}
 `
 	)
