@@ -7,6 +7,17 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import mammoth from 'mammoth';
 import type { ResumeStructuredData } from '$lib/server/database/schema';
 
+// Helper to create Supabase client - called lazily inside steps to reduce CPU overhead
+// between step invocations in Cloudflare Workers (fixes error 1102)
+function createSupabase() {
+	return createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
+		cookies: {
+			getAll: () => [],
+			setAll: () => {}
+		}
+	});
+}
+
 // Get Anthropic provider (optionally through Cloudflare AI Gateway)
 function getAnthropicProvider() {
 	const baseURL = env.CLOUDFLARE_AI_GATEWAY_URL
@@ -83,15 +94,12 @@ export const parseResumeFile = inngest.createFunction(
 	async ({ event, step }) => {
 		const { userId, resumeId, fileUrl, fileType } = event.data;
 
-		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
-			cookies: {
-				getAll: () => [],
-				setAll: () => {}
-			}
-		});
+		// NOTE: Supabase client is now created INSIDE each step to avoid
+		// CPU overhead on every Inngest step invocation (fixes Cloudflare error 1102)
 
 		// Step 1: Download the resume file from Supabase Storage
 		const fileData = await step.run('download-file', async () => {
+			const supabase = createSupabase();
 			// Extract the file path from the public URL
 			// URL format: https://{project}.supabase.co/storage/v1/object/public/resumes/{path}
 			const urlParts = fileUrl.split('/resumes/');
@@ -207,6 +215,7 @@ export const parseResumeFile = inngest.createFunction(
 
 		// Step 4: Update the resume record with parsed content and structured data
 		await step.run('save-parsed-data', async () => {
+			const supabase = createSupabase();
 			const { error } = await supabase
 				.from('resumes')
 				.update({
@@ -223,6 +232,7 @@ export const parseResumeFile = inngest.createFunction(
 
 		// Step 5: Update user profile with extracted data (if not already set)
 		await step.run('update-profile-from-resume', async () => {
+			const supabase = createSupabase();
 			// Get current profile
 			const { data: profile, error: profileError } = await supabase
 				.from('profiles')

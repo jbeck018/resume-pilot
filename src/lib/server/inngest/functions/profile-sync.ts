@@ -3,6 +3,17 @@ import { createServerClient } from '@supabase/ssr';
 import { env as publicEnv } from '$env/dynamic/public';
 import { env } from '$env/dynamic/private';
 
+// Helper to create Supabase client - called lazily inside steps to reduce CPU overhead
+// between step invocations in Cloudflare Workers (fixes error 1102)
+function createSupabase() {
+	return createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
+		cookies: {
+			getAll: () => [],
+			setAll: () => {}
+		}
+	});
+}
+
 interface GitHubUser {
 	login: string;
 	name: string | null;
@@ -44,12 +55,8 @@ export const syncProfileFromGitHub = inngest.createFunction(
 			};
 		}
 
-		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
-			cookies: {
-				getAll: () => [],
-				setAll: () => {}
-			}
-		});
+		// NOTE: Supabase client is now created INSIDE each step to avoid
+		// CPU overhead on every Inngest step invocation (fixes Cloudflare error 1102)
 
 		// Step 1: Fetch GitHub user profile
 		const githubData = await step.run('fetch-github-profile', async () => {
@@ -200,6 +207,7 @@ export const syncProfileFromGitHub = inngest.createFunction(
 
 		// Step 4: Update profile with GitHub data (only if fields are empty)
 		await step.run('update-profile-from-github', async () => {
+			const supabase = createSupabase();
 			// Get current profile
 			const { data: profile, error: profileError } = await supabase
 				.from('profiles')

@@ -17,6 +17,17 @@ import {
 } from '$lib/server/agents/agents/resume-generation-v2';
 import type { AgentContext, ProfileInfo, ExperienceItem, EducationItem } from '$lib/server/agents/types';
 
+// Helper to create Supabase client - called lazily inside steps to reduce CPU overhead
+// between step invocations in Cloudflare Workers (fixes error 1102)
+function createSupabase() {
+	return createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
+		cookies: {
+			getAll: () => [],
+			setAll: () => {}
+		}
+	});
+}
+
 // Resume generation workflow using ResumeGenerationAgentV2
 // V2 features: 6-phase pipeline, gap analysis, confidence scoring, library patterns, reframing strategies
 export const generateResumeForJob = inngest.createFunction(
@@ -32,12 +43,8 @@ export const generateResumeForJob = inngest.createFunction(
 	async ({ event, step }) => {
 		const { userId, jobId, applicationId, skipUsageCheck = false } = event.data;
 
-		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
-			cookies: {
-				getAll: () => [],
-				setAll: () => {}
-			}
-		});
+		// NOTE: Supabase client is now created INSIDE each step to avoid
+		// CPU overhead on every Inngest step invocation (fixes Cloudflare error 1102)
 
 		// Step 0: Check usage limits (unless explicitly skipped for admin/system operations)
 		if (!skipUsageCheck) {
@@ -49,6 +56,7 @@ export const generateResumeForJob = inngest.createFunction(
 			if (!usageCheck.canGenerate) {
 				// Mark application as limit_exceeded
 				await step.run('mark-limit-exceeded', async () => {
+					const supabase = createSupabase();
 					// Note: usageCheck.resetsAt is already a string because Inngest serializes step results to JSON
 					const resetsAtStr = typeof usageCheck.resetsAt === 'string'
 						? usageCheck.resetsAt
@@ -82,6 +90,7 @@ export const generateResumeForJob = inngest.createFunction(
 
 		// Step 1: Get job details
 		const job = await step.run('get-job-details', async () => {
+			const supabase = createSupabase();
 			const { data, error } = await supabase
 				.from('jobs')
 				.select('*')
@@ -95,6 +104,7 @@ export const generateResumeForJob = inngest.createFunction(
 
 		// Step 2: Get user profile and default resume
 		const { profile, resume } = await step.run('get-user-data', async () => {
+			const supabase = createSupabase();
 			const [profileResult, resumeResult] = await Promise.all([
 				supabase.from('profiles').select('*').eq('user_id', userId).single(),
 				supabase
@@ -235,6 +245,7 @@ export const generateResumeForJob = inngest.createFunction(
 			} catch (error) {
 				if (error instanceof BudgetExceededError) {
 					// Budget exceeded - mark application as budget_exceeded
+					const supabase = createSupabase();
 					await supabase
 						.from('job_applications')
 						.update({ status: 'budget_exceeded', updated_at: new Date().toISOString() })
@@ -247,6 +258,7 @@ export const generateResumeForJob = inngest.createFunction(
 
 		// Step 4: Update application with generated content (V2 enhanced fields)
 		await step.run('save-application', async () => {
+			const supabase = createSupabase();
 			const resumeData = applicationResult.resume;
 
 			// Build confidence score JSONB
@@ -343,6 +355,7 @@ export const generateResumeForJob = inngest.createFunction(
 
 		// Step 6: Send resume ready email notification
 		const emailResult = await step.run('send-resume-ready-email', async () => {
+			const supabase = createSupabase();
 			// Check if user wants to receive resume ready emails
 			const emailPrefs = parseEmailPreferences(profile.email_preferences);
 			if (!shouldSendEmail(emailPrefs, 'resumeReady')) {

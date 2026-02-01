@@ -9,6 +9,17 @@ import {
 	type JobMatch
 } from '$lib/server/email';
 
+// Helper to create Supabase client - called lazily inside steps to reduce CPU overhead
+// between step invocations in Cloudflare Workers (fixes error 1102)
+function createSupabase() {
+	return createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
+		cookies: {
+			getAll: () => [],
+			setAll: () => {}
+		}
+	});
+}
+
 // Weekly summary email workflow - sends every Monday at 9 AM UTC
 export const sendWeeklySummaries = inngest.createFunction(
 	{
@@ -17,12 +28,8 @@ export const sendWeeklySummaries = inngest.createFunction(
 	},
 	{ cron: '0 9 * * 1' }, // Every Monday at 9 AM UTC
 	async ({ step }) => {
-		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
-			cookies: {
-				getAll: () => [],
-				setAll: () => {}
-			}
-		});
+		// NOTE: Supabase client is now created INSIDE each step to avoid
+		// CPU overhead on every Inngest step invocation (fixes Cloudflare error 1102)
 
 		// Calculate week boundaries (last Monday to Sunday)
 		const now = new Date();
@@ -36,6 +43,7 @@ export const sendWeeklySummaries = inngest.createFunction(
 
 		// Step 1: Get all users who want weekly summaries
 		const users = await step.run('get-users-with-weekly-summary', async () => {
+			const supabase = createSupabase();
 			const { data, error } = await supabase
 				.from('profiles')
 				.select('user_id, email, full_name, email_preferences');
@@ -51,6 +59,7 @@ export const sendWeeklySummaries = inngest.createFunction(
 
 		// Step 2: Send summary email to each user
 		const results = await step.run('send-summary-emails', async () => {
+			const supabase = createSupabase();
 			const sent: string[] = [];
 			const failed: string[] = [];
 			const skipped: string[] = [];
