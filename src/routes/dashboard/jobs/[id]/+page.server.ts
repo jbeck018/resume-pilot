@@ -75,7 +75,9 @@ export const load: PageServerLoad = async ({ params, locals: { supabase, user } 
 			remaining: usageCheck.remaining,
 			isUnlimited: usageCheck.isUnlimited,
 			tierName: usageCheck.tierName,
-			resetsAt: usageCheck.resetsAt.toISOString()
+			resetsAt: usageCheck.resetsAt instanceof Date && !isNaN(usageCheck.resetsAt.getTime())
+				? usageCheck.resetsAt.toISOString()
+				: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 		}
 	};
 };

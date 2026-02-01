@@ -78,7 +78,7 @@ class UsageServiceImpl {
 			generationLimit: result.generation_limit,
 			remaining: result.remaining,
 			tierName: result.tier_name,
-			resetsAt: new Date(result.resets_at),
+			resetsAt: result.resets_at ? new Date(result.resets_at) : this.getWeekEnd(),
 			isUnlimited: result.generation_limit === -1
 		};
 	}
