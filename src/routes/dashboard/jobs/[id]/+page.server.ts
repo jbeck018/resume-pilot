@@ -26,60 +26,104 @@ export const load: PageServerLoad = async ({ params, locals: { supabase, user } 
 	type ApplicationRow = Database['public']['Tables']['job_applications']['Row'];
 	type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
-	const [jobResult, applicationResult, profileResult, usageCheck] = await Promise.all([
-		supabase
-			.from('jobs')
-			.select('*')
-			.eq('id', params.id)
-			.eq('user_id', user.id)
-			.single<JobRow>(),
+	try {
+		// Fetch data in parallel - handle each query separately for better error handling
+		const [jobResult, applicationResult, profileResult] = await Promise.all([
+			supabase
+				.from('jobs')
+				.select('*')
+				.eq('id', params.id)
+				.eq('user_id', user.id)
+				.single<JobRow>(),
 
-		supabase
-			.from('job_applications')
-			.select('*')
-			.eq('job_id', params.id)
-			.eq('user_id', user.id)
-			.single<ApplicationRow>(),
+			supabase
+				.from('job_applications')
+				.select('*')
+				.eq('job_id', params.id)
+				.eq('user_id', user.id)
+				.single<ApplicationRow>(),
 
-		supabase
-			.from('profiles')
-			.select('*')
-			.eq('user_id', user.id)
-			.single<ProfileRow>(),
+			supabase
+				.from('profiles')
+				.select('*')
+				.eq('user_id', user.id)
+				.single<ProfileRow>()
+		]);
 
-		usageService.checkUsageLimit(user.id)
-	]);
-
-	// Compute analysis data if both job and profile exist
-	let matchBreakdown = null;
-	let atsAnalysis = null;
-	let skillsGap = null;
-
-	if (jobResult.data && profileResult.data) {
-		matchBreakdown = calculateMatchBreakdown(jobResult.data, profileResult.data);
-		atsAnalysis = analyzeATS(jobResult.data, profileResult.data);
-		skillsGap = analyzeSkillsGap(jobResult.data, profileResult.data);
-	}
-
-	return {
-		job: jobResult.data || null,
-		application: applicationResult.data || null,
-		profile: profileResult.data || null,
-		matchBreakdown,
-		atsAnalysis,
-		skillsGap,
-		usage: {
-			canGenerate: usageCheck.canGenerate,
-			generationsUsed: usageCheck.generationsUsed,
-			generationLimit: usageCheck.generationLimit,
-			remaining: usageCheck.remaining,
-			isUnlimited: usageCheck.isUnlimited,
-			tierName: usageCheck.tierName,
-			resetsAt: usageCheck.resetsAt instanceof Date && !isNaN(usageCheck.resetsAt.getTime())
-				? usageCheck.resetsAt.toISOString()
-				: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+		// Get usage check separately to handle potential errors
+		let usageCheck;
+		try {
+			usageCheck = await usageService.checkUsageLimit(user.id);
+		} catch (usageError) {
+			console.error('[Job Page] Usage check failed:', usageError);
+			// Provide default usage values on error
+			usageCheck = {
+				canGenerate: false,
+				generationsUsed: 0,
+				generationLimit: 5,
+				remaining: 0,
+				isUnlimited: false,
+				tierName: 'free',
+				resetsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+			};
 		}
-	};
+
+		// Compute analysis data if both job and profile exist
+		let matchBreakdown = null;
+		let atsAnalysis = null;
+		let skillsGap = null;
+
+		if (jobResult.data && profileResult.data) {
+			try {
+				matchBreakdown = calculateMatchBreakdown(jobResult.data, profileResult.data);
+				atsAnalysis = analyzeATS(jobResult.data, profileResult.data);
+				skillsGap = analyzeSkillsGap(jobResult.data, profileResult.data);
+			} catch (analysisError) {
+				console.error('[Job Page] Analysis calculation failed:', analysisError);
+				// Continue without analysis data
+			}
+		}
+
+		return {
+			job: jobResult.data || null,
+			application: applicationResult.data || null,
+			profile: profileResult.data || null,
+			matchBreakdown,
+			atsAnalysis,
+			skillsGap,
+			usage: {
+				canGenerate: usageCheck.canGenerate,
+				generationsUsed: usageCheck.generationsUsed,
+				generationLimit: usageCheck.generationLimit,
+				remaining: usageCheck.remaining,
+				isUnlimited: usageCheck.isUnlimited,
+				tierName: usageCheck.tierName,
+				resetsAt: usageCheck.resetsAt instanceof Date && !isNaN(usageCheck.resetsAt.getTime())
+					? usageCheck.resetsAt.toISOString()
+					: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+			}
+		};
+	} catch (error) {
+		console.error('[Job Page] Load function error:', error);
+		// Return safe defaults instead of throwing
+		return {
+			job: null,
+			application: null,
+			profile: null,
+			usage: {
+				canGenerate: false,
+				generationsUsed: 0,
+				generationLimit: 5,
+				remaining: 0,
+				isUnlimited: false,
+				tierName: 'free',
+				resetsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+			},
+			matchBreakdown: null,
+			atsAnalysis: null,
+			skillsGap: null
+		};
+	}
 };
 
 export const actions: Actions = {
