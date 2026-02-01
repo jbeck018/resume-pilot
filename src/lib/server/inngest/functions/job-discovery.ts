@@ -562,50 +562,78 @@ export const dailyJobDiscovery = inngest.createFunction(
 			}
 		});
 
-		// Calculate learning statistics for return value
-		const learningStats = learnedPreferences
-			? {
-					isActive: learnedPreferences.isActive,
-					feedbackCount: learnedPreferences.feedbackCount.total,
-					jobsAdjusted: scoredJobs.filter((j) => j.learningAdjustment !== 0).length,
-					avgAdjustment:
-						scoredJobs.length > 0
-							? Math.round(
-									scoredJobs.reduce((sum, j) => sum + j.learningAdjustment, 0) / scoredJobs.length
-								)
-							: 0
-				}
-			: {
-					isActive: false,
-					feedbackCount: 0,
-					jobsAdjusted: 0,
-					avgAdjustment: 0
-				};
+		// Step 12: Calculate final statistics in a separate step to avoid CPU limits in finalization
+		// This moves the array operations (filter, reduce) out of the main return statement
+		const finalStats = await step.run('calculate-final-stats', async () => {
+			// Cast to proper type after Inngest JSON serialization
+			const jobs = scoredJobs as unknown as ScoredJob[];
+			const searchData = searchResults as {
+				adzuna: JobResult[];
+				muse: JobResult[];
+				greenhouse: JobResult[];
+				lever: JobResult[];
+				remoteok: JobResult[];
+				weworkremotely: JobResult[];
+				jooble: JobResult[];
+			};
+			const uniqueJobsData = uniqueJobs as unknown as JobResult[];
 
+			// Pre-calculate learning stats to avoid CPU-heavy operations in finalization
+			let jobsAdjusted = 0;
+			let totalAdjustment = 0;
+
+			if (jobs.length > 0) {
+				for (const job of jobs) {
+					if (job.learningAdjustment !== 0) {
+						jobsAdjusted++;
+					}
+					totalAdjustment += job.learningAdjustment;
+				}
+			}
+
+			const avgAdjustment = jobs.length > 0 ? Math.round(totalAdjustment / jobs.length) : 0;
+
+			// Pre-calculate source totals
+			const totalFound =
+				searchData.adzuna.length +
+				searchData.muse.length +
+				searchData.greenhouse.length +
+				searchData.lever.length +
+				searchData.remoteok.length +
+				searchData.weworkremotely.length +
+				searchData.jooble.length;
+
+			return {
+				totalFound,
+				bySource: {
+					adzuna: searchData.adzuna.length,
+					muse: searchData.muse.length,
+					greenhouse: searchData.greenhouse.length,
+					lever: searchData.lever.length,
+					remoteok: searchData.remoteok.length,
+					weworkremotely: searchData.weworkremotely.length,
+					jooble: searchData.jooble.length
+				},
+				newJobs: uniqueJobsData.length,
+				learningStats: {
+					isActive: learnedPreferences?.isActive || false,
+					feedbackCount: learnedPreferences?.feedbackCount?.total || 0,
+					jobsAdjusted,
+					avgAdjustment
+				}
+			};
+		});
+
+		// Return pre-calculated values - minimal CPU work in finalization
 		return {
-			totalFound:
-				searchResults.adzuna.length +
-				searchResults.muse.length +
-				searchResults.greenhouse.length +
-				searchResults.lever.length +
-				searchResults.remoteok.length +
-				searchResults.weworkremotely.length +
-				searchResults.jooble.length,
-			bySource: {
-				adzuna: searchResults.adzuna.length,
-				muse: searchResults.muse.length,
-				greenhouse: searchResults.greenhouse.length,
-				lever: searchResults.lever.length,
-				remoteok: searchResults.remoteok.length,
-				weworkremotely: searchResults.weworkremotely.length,
-				jooble: searchResults.jooble.length
-			},
-			newJobs: uniqueJobs.length,
+			totalFound: finalStats.totalFound,
+			bySource: finalStats.bySource,
+			newJobs: finalStats.newJobs,
 			savedJobs: savedJobs.saved,
 			embeddingsGenerated: savedJobs.embeddingsStored,
 			usedEmbeddingMatching: hasEmbedding,
-			usedLearning: learningStats.isActive,
-			learningStats,
+			usedLearning: finalStats.learningStats.isActive,
+			learningStats: finalStats.learningStats,
 			generationsQueued: generationResults.queued,
 			generationsSkipped: generationResults.skippedLimitReached,
 			emailSent: emailResult.sent
