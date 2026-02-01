@@ -47,6 +47,17 @@ type ScoredJob = JobWithEmbedding & {
 const EMBEDDING_MATCH_THRESHOLD = 30;
 const EMBEDDING_DIMENSIONS = 1536;
 
+// Helper to create Supabase client - called lazily inside steps to reduce CPU overhead
+// between step invocations in Cloudflare Workers
+function createSupabase() {
+	return createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
+		cookies: {
+			getAll: () => [],
+			setAll: () => {}
+		}
+	});
+}
+
 // Daily job discovery workflow
 export const dailyJobDiscovery = inngest.createFunction(
 	{
@@ -61,16 +72,12 @@ export const dailyJobDiscovery = inngest.createFunction(
 	async ({ event, step }) => {
 		const { userId } = event.data;
 
-		// Create Supabase client with service role for server-side operations
-		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
-			cookies: {
-				getAll: () => [],
-				setAll: () => {}
-			}
-		});
+		// NOTE: Supabase client is now created INSIDE each step to avoid
+		// CPU overhead on every Inngest step invocation (fixes Cloudflare error 1102)
 
 		// Step 1: Get user profile and preferences
 		const profile = await step.run('get-user-profile', async () => {
+			const supabase = createSupabase();
 			const { data, error } = await supabase
 				.from('profiles')
 				.select('*')
@@ -117,11 +124,17 @@ export const dailyJobDiscovery = inngest.createFunction(
 
 		// Step 3: Get existing job IDs to avoid duplicates
 		// Note: Using array instead of Set because Inngest serializes step results to JSON
+		// Limited to last 90 days to reduce serialization overhead (fixes Cloudflare CPU limits)
 		const existingJobIds = await step.run('get-existing-jobs', async () => {
+			const supabase = createSupabase();
+			const ninetyDaysAgo = new Date();
+			ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
 			const { data, error } = await supabase
 				.from('jobs')
 				.select('external_id, source')
-				.eq('user_id', userId);
+				.eq('user_id', userId)
+				.gte('created_at', ninetyDaysAgo.toISOString());
 
 			if (error) throw new Error(`Failed to get existing jobs: ${error.message}`);
 
@@ -343,6 +356,7 @@ export const dailyJobDiscovery = inngest.createFunction(
 
 		// Step 8: Save new jobs to database with embeddings
 		const savedJobs = await step.run('save-jobs', async () => {
+			const supabase = createSupabase();
 			// Cast to proper type after Inngest JSON serialization
 			const jobs = scoredJobs as unknown as ScoredJob[];
 
@@ -389,6 +403,7 @@ export const dailyJobDiscovery = inngest.createFunction(
 
 		// Step 9: Create job applications and collect events to send
 		const generationResults = await step.run('create-job-applications', async () => {
+			const supabase = createSupabase();
 			const results = {
 				queued: 0,
 				skippedLimitReached: 0,
@@ -464,6 +479,7 @@ export const dailyJobDiscovery = inngest.createFunction(
 
 		// Step 10: Log search history
 		await step.run('log-search-history', async () => {
+			const supabase = createSupabase();
 			await supabase.from('search_history').insert({
 				user_id: userId,
 				query: profile.preferred_roles?.join(', ') || 'general',
@@ -491,6 +507,7 @@ export const dailyJobDiscovery = inngest.createFunction(
 
 		// Step 11: Send job matches email notification
 		const emailResult = await step.run('send-job-matches-email', async () => {
+			const supabase = createSupabase();
 			// Check if user wants to receive job match emails
 			const emailPrefs = parseEmailPreferences(profile.email_preferences);
 			if (!shouldSendEmail(emailPrefs, 'jobMatches')) {
@@ -650,15 +667,11 @@ export const scheduleDailyDiscovery = inngest.createFunction(
 	},
 	{ cron: '0 6 * * *' }, // Run at 6 AM UTC daily
 	async ({ step }) => {
-		const supabase = createServerClient(publicEnv.PUBLIC_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
-			cookies: {
-				getAll: () => [],
-				setAll: () => {}
-			}
-		});
+		// NOTE: Supabase client created INSIDE step to avoid CPU overhead (fixes Cloudflare error 1102)
 
 		// Get all active users
 		const users = await step.run('get-active-users', async () => {
+			const supabase = createSupabase();
 			const { data, error } = await supabase.from('profiles').select('user_id');
 
 			if (error) throw new Error(`Failed to get users: ${error.message}`);
