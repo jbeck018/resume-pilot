@@ -41,19 +41,24 @@ export class AdminAccessError extends Error {
  * Get the role of a user by their Supabase auth user ID
  */
 export async function getUserRole(userId: string): Promise<UserRole | null> {
-	const db = getDb();
+	try {
+		const db = getDb();
 
-	const result = await db
-		.select({ role: profiles.role })
-		.from(profiles)
-		.where(eq(profiles.userId, userId))
-		.limit(1);
+		const result = await db
+			.select({ role: profiles.role })
+			.from(profiles)
+			.where(eq(profiles.userId, userId))
+			.limit(1);
 
-	if (result.length === 0) {
-		return null;
+		if (result.length === 0) {
+			return null;
+		}
+
+		return result[0].role as UserRole;
+	} catch (error) {
+		console.error('[Admin] Failed to fetch user role:', error instanceof Error ? error.message : String(error));
+		throw error; // Re-throw so caller can handle
 	}
-
-	return result[0].role as UserRole;
 }
 
 /**
@@ -81,11 +86,16 @@ export async function getUserRoleByEmail(email: string): Promise<UserRole | null
  * @param email - Optional email for fallback check (legacy support)
  */
 export async function isAdmin(userId: string, email?: string): Promise<boolean> {
-	const role = await getUserRole(userId);
+	try {
+		const role = await getUserRole(userId);
 
-	// Check by role
-	if (role === 'admin' || role === 'root_admin') {
-		return true;
+		// Check by role
+		if (role === 'admin' || role === 'root_admin') {
+			return true;
+		}
+	} catch (error) {
+		console.error('[Admin] Error checking user role in isAdmin():', error);
+		// Fall through to legacy check
 	}
 
 	// Legacy fallback: check by email for root admin
