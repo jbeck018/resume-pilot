@@ -38,7 +38,11 @@ function getHandler() {
 		client: inngest,
 		functions,
 		signingKey: env.INNGEST_SIGNING_KEY,
-		servePath: '/api/inngest'
+		servePath: '/api/inngest',
+		// Enable streaming to extend request timeouts on Cloudflare Workers/Pages
+		// This allows Inngest to use HTTP streaming for long-running step executions
+		// and can extend effective timeout from ~30s to ~15 minutes
+		streaming: 'allow'
 	});
 }
 
