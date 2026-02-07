@@ -22,12 +22,21 @@ const corsHeaders = {
 // Simple auth check (should use proper auth in production)
 function isAuthorized(request: Request, env: Env): boolean {
 	const authHeader = request.headers.get('Authorization');
-	if (!authHeader) return false;
+	if (!authHeader) {
+		console.warn('Authorization request missing Authorization header');
+		return false;
+	}
 
 	// Accept Bearer token matching a secret
-	const token = authHeader.replace('Bearer ', '');
+	const token = authHeader.replace('Bearer ', '').trim();
+	if (!token) {
+		console.warn('Authorization request has empty bearer token');
+		return false;
+	}
+
 	// In production, use a proper secret comparison
-	return token.length > 0;
+	// For now, accept any non-empty token
+	return true;
 }
 
 export default {
@@ -50,6 +59,13 @@ export default {
 
 		// Trigger a workflow
 		if (url.pathname === '/trigger' && request.method === 'POST') {
+			if (!isAuthorized(request, env)) {
+				return new Response(
+					JSON.stringify({ error: 'Unauthorized: missing or invalid authentication token' }),
+					{ status: 401, headers: corsHeaders }
+				);
+			}
+
 			try {
 				const body = (await request.json()) as WorkflowTriggerRequest;
 				const { workflow, params, instanceId } = body;
@@ -121,6 +137,13 @@ export default {
 
 		// Get workflow status
 		if (url.pathname === '/status' && request.method === 'POST') {
+			if (!isAuthorized(request, env)) {
+				return new Response(
+					JSON.stringify({ error: 'Unauthorized: missing or invalid authentication token' }),
+					{ status: 401, headers: corsHeaders }
+				);
+			}
+
 			try {
 				const body = (await request.json()) as WorkflowStatusRequest;
 				const { workflow, instanceId } = body;

@@ -41,7 +41,7 @@
 	<title>{data.job?.title} - HowlerHire</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="mx-auto max-w-7xl space-y-6 overflow-x-hidden px-4 sm:px-6 lg:px-8">
 	<!-- Back button -->
 	<Button variant="ghost" href="/dashboard/jobs">
 		<ArrowLeft class="mr-2 h-4 w-4" />
@@ -52,9 +52,9 @@
 		<!-- Job Header -->
 		<Card>
 			<CardContent class="pt-6">
-				<div class="flex items-start justify-between gap-4">
-					<div class="flex items-start gap-4">
-						<div class="flex h-16 w-16 items-center justify-center rounded-lg bg-primary/10">
+				<div class="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto]">
+					<div class="grid grid-cols-[auto_1fr] gap-4">
+						<div class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
 							{#if data.job.company_logo}
 								<img
 									src={data.job.company_logo}
@@ -66,21 +66,21 @@
 							{/if}
 						</div>
 
-						<div>
-							<h1 class="text-2xl font-bold">{data.job.title}</h1>
-							<p class="text-lg text-muted-foreground">{data.job.company}</p>
-							<div class="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+						<div class="min-w-0">
+							<h1 class="truncate text-2xl font-bold">{data.job.title}</h1>
+							<p class="truncate text-lg text-muted-foreground">{data.job.company}</p>
+							<div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
 								{#if data.job.location}
 									<span class="flex items-center gap-1">
-										<MapPin class="h-4 w-4" />
-										{data.job.location}
+										<MapPin class="h-4 w-4 flex-shrink-0" />
+										<span class="truncate">{data.job.location}</span>
 									</span>
 								{/if}
 								{#if data.job.is_remote}
 									<Badge variant="outline">Remote</Badge>
 								{/if}
 								{#if data.job.employment_type}
-									<span>{data.job.employment_type}</span>
+									<span class="whitespace-nowrap">{data.job.employment_type}</span>
 								{/if}
 								{#if data.job.status}
 									{@const statusMap = {
@@ -99,13 +99,11 @@
 						</div>
 					</div>
 
-					<div class="flex flex-col items-end gap-2">
-						<div class="flex gap-2">
-							<Button variant="outline" href={data.job.source_url} target="_blank">
-								<ExternalLink class="mr-2 h-4 w-4" />
-								View Original
-							</Button>
-						</div>
+					<div class="flex items-start gap-2 lg:flex-col lg:items-end">
+						<Button variant="outline" href={data.job.source_url} target="_blank" class="w-full lg:w-auto">
+							<ExternalLink class="mr-2 h-4 w-4" />
+							View Original
+						</Button>
 					</div>
 				</div>
 			</CardContent>
@@ -176,10 +174,10 @@
 				<CardDescription>Update the status of this job application</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<form method="POST" use:enhance class="flex flex-wrap gap-2">
+				<form method="POST" use:enhance class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 					<input type="hidden" name="jobId" value={data.job.id} />
 
-					<Button type="submit" formaction="?/markSaved" variant="outline">
+					<Button type="submit" formaction="?/markSaved" variant="outline" class="w-full">
 						<Clock class="mr-2 h-4 w-4" />
 						Save for Later
 					</Button>
@@ -188,16 +186,17 @@
 						type="submit"
 						formaction="?/markApplied"
 						variant={data.job.status === 'applied' ? 'default' : 'outline'}
+						class="w-full"
 					>
 						<CheckCircle class="mr-2 h-4 w-4" />
 						Mark as Applied
 					</Button>
 
-					<Button type="submit" formaction="?/markInterview" variant="outline">
+					<Button type="submit" formaction="?/markInterview" variant="outline" class="w-full">
 						Interview Scheduled
 					</Button>
 
-					<Button type="submit" formaction="?/markOffer" variant="outline">
+					<Button type="submit" formaction="?/markOffer" variant="outline" class="w-full">
 						Received Offer
 					</Button>
 
@@ -205,6 +204,7 @@
 						type="submit"
 						formaction="?/markRejected"
 						variant="outline"
+						class="w-full"
 					>
 						<XCircle class="mr-2 h-4 w-4" />
 						Rejected
@@ -214,6 +214,7 @@
 						type="submit"
 						formaction="?/markNotRelevant"
 						variant={data.job.status === 'not_relevant' ? 'default' : 'outline'}
+						class="w-full"
 					>
 						Not Relevant
 					</Button>
@@ -225,7 +226,7 @@
 					<form method="POST" action="?/submitFeedback" use:enhance class="space-y-4">
 						<input type="hidden" name="jobId" value={data.job.id} />
 
-						<div class="flex gap-2">
+						<div class="flex flex-wrap gap-2">
 							<Button
 								type="submit"
 								name="feedback"
@@ -258,6 +259,7 @@
 									name="reason"
 									placeholder="e.g., Wrong skill set, wrong location, salary too low..."
 									bind:value={feedbackReason}
+									class="max-w-full"
 								/>
 								<Button type="submit" size="sm">Submit Feedback</Button>
 							</div>
@@ -271,7 +273,7 @@
 		{#if data.application}
 			<Card>
 				<CardHeader>
-					<div class="flex items-center justify-between">
+					<div class="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto]">
 						<div>
 							<CardTitle>Generated Documents</CardTitle>
 							<CardDescription>
@@ -285,11 +287,12 @@
 							</CardDescription>
 						</div>
 
-						<div class="flex gap-2">
+						<div class="flex flex-wrap gap-2 lg:items-start">
 							<Button
 								variant={activeTab === 'resume' ? 'default' : 'outline'}
 								size="sm"
 								onclick={() => (activeTab = 'resume')}
+								class="flex-1 sm:flex-initial"
 							>
 								<FileText class="mr-2 h-4 w-4" />
 								Resume
@@ -298,6 +301,7 @@
 								variant={activeTab === 'cover' ? 'default' : 'outline'}
 								size="sm"
 								onclick={() => (activeTab = 'cover')}
+								class="flex-1 sm:flex-initial"
 							>
 								<FileText class="mr-2 h-4 w-4" />
 								Cover Letter
@@ -306,6 +310,7 @@
 								variant={activeTab === 'emails' ? 'default' : 'outline'}
 								size="sm"
 								onclick={() => (activeTab = 'emails')}
+								class="flex-1 sm:flex-initial"
 							>
 								<Mail class="mr-2 h-4 w-4" />
 								Follow-up Emails
@@ -325,7 +330,7 @@
 						</div>
 					{:else if data.application.status === 'ready'}
 						<div class="space-y-4">
-							<div class="flex justify-end gap-2">
+							<div class="flex flex-wrap justify-end gap-2">
 								<Button
 									variant="outline"
 									size="sm"
@@ -345,8 +350,8 @@
 								</Button>
 							</div>
 
-							<div class="rounded-lg border bg-muted/30 p-6">
-								<div class="prose prose-sm max-w-none dark:prose-invert">
+							<div class="overflow-x-auto rounded-lg border bg-muted/30 p-6">
+								<div class="prose prose-sm max-w-none break-words dark:prose-invert">
 									{#if activeTab === 'resume'}
 										{@html data.application.tailored_resume?.replace(/\n/g, '<br>') ||
 											'No resume generated yet'}
@@ -389,8 +394,10 @@
 			</CardHeader>
 			<CardContent>
 				{#if data.job.description}
-					<div class="prose prose-sm max-w-none dark:prose-invert">
-						{@html data.job.description.replace(/\n/g, '<br>')}
+					<div class="overflow-x-auto">
+						<div class="prose prose-sm max-w-none break-words dark:prose-invert">
+							{@html data.job.description.replace(/\n/g, '<br>')}
+						</div>
 					</div>
 				{:else}
 					<p class="text-muted-foreground">No description available</p>
@@ -401,7 +408,7 @@
 						<h4 class="mb-2 font-semibold">Requirements</h4>
 						<ul class="list-inside list-disc space-y-1 text-sm text-muted-foreground">
 							{#each data.job.requirements as req}
-								<li>{req}</li>
+								<li class="break-words">{req}</li>
 							{/each}
 						</ul>
 					</div>

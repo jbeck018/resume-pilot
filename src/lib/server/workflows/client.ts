@@ -71,7 +71,8 @@ export class WorkflowsClient {
 
 	constructor() {
 		// Get the workflows worker URL from environment
-		this.baseUrl = env.WORKFLOWS_WORKER_URL || 'https://howlerhire-workflows.workers.dev';
+		// Must be set for workflows to function (no fallback - fail fast if missing)
+		this.baseUrl = env.WORKFLOWS_WORKER_URL || '';
 		this.authToken = env.WORKFLOWS_AUTH_TOKEN || '';
 	}
 
@@ -91,25 +92,45 @@ export class WorkflowsClient {
 						: WeeklySummaryParams,
 		instanceId?: string
 	): Promise<TriggerResponse> {
-		const response = await fetch(`${this.baseUrl}/trigger`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${this.authToken}`
-			},
-			body: JSON.stringify({
-				workflow,
-				params,
-				instanceId
-			})
-		});
-
-		if (!response.ok) {
-			const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-			throw new Error(`Failed to trigger workflow: ${(error as { error: string }).error}`);
+		if (!this.baseUrl) {
+			throw new Error('WORKFLOWS_WORKER_URL environment variable is not set');
 		}
 
-		return response.json();
+		if (!this.authToken) {
+			throw new Error('WORKFLOWS_AUTH_TOKEN environment variable is not set. Workflows cannot be triggered without authentication.');
+		}
+
+		try {
+			const response = await fetch(`${this.baseUrl}/trigger`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${this.authToken}`
+				},
+				body: JSON.stringify({
+					workflow,
+					params,
+					instanceId
+				})
+			});
+
+			if (!response.ok) {
+				const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+				const errorMsg = (error as { error: string }).error || response.statusText;
+				console.error(`Failed to trigger ${workflow} workflow:`, {
+					status: response.status,
+					error: errorMsg,
+					baseUrl: this.baseUrl,
+					hasAuthToken: !!this.authToken
+				});
+				throw new Error(`Failed to trigger workflow: ${errorMsg}`);
+			}
+
+			return response.json();
+		} catch (error) {
+			console.error(`Network error triggering ${workflow} workflow:`, error);
+			throw error;
+		}
 	}
 
 	/**
