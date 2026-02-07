@@ -14,27 +14,28 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 		};
 	}
 
-	// Get current week start for usage tracking
-	const today = new Date();
-	const dayOfWeek = today.getDay();
-	const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Monday
-	const weekStart = new Date(today);
-	weekStart.setDate(today.getDate() + diff);
-	weekStart.setHours(0, 0, 0, 0);
+	try {
+		// Get current week start for usage tracking
+		const today = new Date();
+		const dayOfWeek = today.getDay();
+		const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Monday
+		const weekStart = new Date(today);
+		weekStart.setDate(today.getDate() + diff);
+		weekStart.setHours(0, 0, 0, 0);
 
-	// Get job statistics
-	const [
-		pendingJobs,
-		appliedJobs,
-		interviewJobs,
-		offerJobs,
-		recentJobs,
-		profile,
-		resumes,
-		applications,
-		usage,
-		parsingResumes
-	] = await Promise.all([
+		// Get job statistics
+		const [
+			pendingJobs,
+			appliedJobs,
+			interviewJobs,
+			offerJobs,
+			recentJobs,
+			profile,
+			resumes,
+			applications,
+			usage,
+			parsingResumes
+		] = await Promise.all([
 		supabase
 			.from('jobs')
 			.select('id', { count: 'exact' })
@@ -63,6 +64,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 			.from('jobs')
 			.select('id, title, company, location, match_score, status, created_at')
 			.eq('user_id', user.id)
+			.or('match_score.gte.15,match_score.is.null')
 			.order('created_at', { ascending: false })
 			.limit(5),
 
@@ -136,21 +138,34 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 		matchRate = Math.round((goodMatches / feedbackData.length) * 100);
 	}
 
-	return {
-		stats: {
-			newJobs: newJobsToday || 0,
-			applied: appliedJobs.count || 0,
-			pending: pendingJobs.count || 0,
-			interviews: interviewJobs.count || 0,
-			offers: offerJobs.count || 0,
-			matchRate
-		},
-		recentJobs: recentJobs.data || [],
-		profileCompletion,
-		resumeCount: resumes.count || 0,
-		generatedCount: applications.count || 0,
-		usage: usage.data || null,
-		// Resume parsing status - show loading indicator if any resumes are being parsed
-		parsingResumes: parsingResumes.data || []
-	};
+		return {
+			stats: {
+				newJobs: newJobsToday || 0,
+				applied: appliedJobs.count || 0,
+				pending: pendingJobs.count || 0,
+				interviews: interviewJobs.count || 0,
+				offers: offerJobs.count || 0,
+				matchRate
+			},
+			recentJobs: recentJobs.data || [],
+			profileCompletion,
+			resumeCount: resumes.count || 0,
+			generatedCount: applications.count || 0,
+			usage: usage.data || null,
+			// Resume parsing status - show loading indicator if any resumes are being parsed
+			parsingResumes: parsingResumes.data || []
+		};
+	} catch (error) {
+		console.error('Error loading dashboard stats:', error);
+		// Return empty state on error
+		return {
+			stats: null,
+			recentJobs: [],
+			profileCompletion: 0,
+			resumeCount: 0,
+			generatedCount: 0,
+			usage: null,
+			parsingResumes: []
+		};
+	}
 };

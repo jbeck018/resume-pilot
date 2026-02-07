@@ -226,6 +226,59 @@
 			{/if}
 		</div>
 
+		<!-- Generate Resume Section -->
+		{#if !data.application}
+			{@const isLowMatch = data.job.match_score !== null && data.job.match_score !== undefined && data.job.match_score < 15}
+			<Card>
+				<CardHeader>
+					<CardTitle>Generate Resume</CardTitle>
+					<CardDescription>
+						{#if isLowMatch}
+							Resume generation is disabled for jobs with match scores below 15%
+						{:else}
+							Create a tailored resume and cover letter for this position
+						{/if}
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form method="POST" action="?/generate" use:enhance class="space-y-4">
+						<input type="hidden" name="jobId" value={data.job.id} />
+
+						{#if isLowMatch}
+							<div class="rounded-lg bg-muted p-4">
+								<p class="text-sm text-muted-foreground">
+									This job has a match score of {data.job.match_score}%, which is below our minimum threshold of 15%.
+									We recommend focusing on jobs with higher match scores for better application success rates.
+								</p>
+							</div>
+							<Button type="submit" disabled class="w-full">
+								<FileText class="mr-2 h-4 w-4" />
+								Generate Resume (Not Available)
+							</Button>
+						{:else if data.usage && !data.usage.canGenerate}
+							<div class="rounded-lg bg-muted p-4">
+								<p class="text-sm text-muted-foreground">
+									You've reached your weekly generation limit ({data.usage.generationsUsed}/{data.usage.generationLimit}).
+									{#if data.usage.resetsAt}
+										Your limit resets on {new Date(data.usage.resetsAt).toLocaleDateString()}.
+									{/if}
+								</p>
+							</div>
+							<Button type="submit" disabled class="w-full">
+								<FileText class="mr-2 h-4 w-4" />
+								Generate Resume (Limit Reached)
+							</Button>
+						{:else}
+							<Button type="submit" class="w-full">
+								<FileText class="mr-2 h-4 w-4" />
+								Generate Resume
+							</Button>
+						{/if}
+					</form>
+				</CardContent>
+			</Card>
+		{/if}
+
 		<!-- Actions -->
 		<Card>
 			<CardHeader>

@@ -34,6 +34,7 @@
 
 	let searchQuery = $state('');
 	let statusFilter = $state<string>('all');
+	let showLowMatches = $state(data.showLowMatches || false);
 
 	// Auto-refresh polling (every 30 seconds for new jobs)
 	const POLL_INTERVAL = 30000;
@@ -136,26 +137,51 @@
 	<!-- Filters -->
 	<Card>
 		<CardContent class="pt-6">
-			<div class="flex flex-col gap-4 md:flex-row">
-				<div class="relative flex-1">
-					<Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-					<Input
-						placeholder="Search jobs..."
-						class="pl-10"
-						bind:value={searchQuery}
-					/>
+			<div class="flex flex-col gap-4">
+				<div class="flex flex-col gap-4 md:flex-row">
+					<div class="relative flex-1">
+						<Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							placeholder="Search jobs..."
+							class="pl-10"
+							bind:value={searchQuery}
+						/>
+					</div>
+
+					<div class="flex gap-2">
+						{#each statusOptions as option}
+							<Button
+								variant={statusFilter === option.value ? 'default' : 'outline'}
+								size="sm"
+								onclick={() => (statusFilter = option.value)}
+							>
+								{option.label}
+							</Button>
+						{/each}
+					</div>
 				</div>
 
-				<div class="flex gap-2">
-					{#each statusOptions as option}
-						<Button
-							variant={statusFilter === option.value ? 'default' : 'outline'}
-							size="sm"
-							onclick={() => (statusFilter = option.value)}
-						>
-							{option.label}
-						</Button>
-					{/each}
+				<div class="flex items-center gap-2 border-t pt-4">
+					<Filter class="h-4 w-4 text-muted-foreground" />
+					<label class="flex items-center gap-2 text-sm">
+						<input
+							type="checkbox"
+							checked={showLowMatches}
+							onchange={(e) => {
+								showLowMatches = e.currentTarget.checked;
+								const url = new URL(window.location.href);
+								if (showLowMatches) {
+									url.searchParams.set('showLowMatches', 'true');
+								} else {
+									url.searchParams.delete('showLowMatches');
+								}
+								window.history.pushState({}, '', url.toString());
+								window.location.reload();
+							}}
+							class="h-4 w-4 rounded border-gray-300"
+						/>
+						<span>Show low matches (below 15%)</span>
+					</label>
 				</div>
 			</div>
 		</CardContent>
