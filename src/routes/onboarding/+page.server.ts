@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Database } from '$lib/server/database/types';
-import { inngest } from '$lib/server/inngest';
+import { workflows } from '$lib/server/workflows/client';
 
 export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 	if (!user) {
@@ -124,7 +124,7 @@ export const actions: Actions = {
 
 			// Trigger background resume parsing job
 			try {
-				await inngest.send({
+				await workflows.send({
 					name: 'resume/parsing.requested',
 					data: {
 						userId: user.id,
@@ -190,7 +190,7 @@ export const actions: Actions = {
 		// Trigger GitHub profile sync if handle provided
 		if (githubHandle) {
 			try {
-				await inngest.send({
+				await workflows.send({
 					name: 'profile/sync.requested',
 					data: {
 						userId: user.id,

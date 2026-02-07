@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Database } from '$lib/server/database/types';
-import { inngest } from '$lib/server/inngest/client';
+import { workflows } from '$lib/server/workflows/client';
 
 type ResumeRow = Database['public']['Tables']['resumes']['Row'];
 
@@ -131,7 +131,7 @@ export const actions: Actions = {
 
 		// Trigger parsing workflow
 		try {
-			await inngest.send({
+			await workflows.send({
 				name: 'resume/parsing.requested',
 				data: {
 					userId: user.id,
@@ -140,8 +140,8 @@ export const actions: Actions = {
 					fileType: fileType as 'pdf' | 'docx'
 				}
 			});
-		} catch (inngestError) {
-			console.error('Inngest error:', inngestError);
+		} catch (workflowError) {
+			console.error('Workflow error:', workflowError);
 			// Don't fail the upload, parsing will be retried later
 		}
 
@@ -313,7 +313,7 @@ export const actions: Actions = {
 
 		// Trigger parsing workflow
 		try {
-			await inngest.send({
+			await workflows.send({
 				name: 'resume/parsing.requested',
 				data: {
 					userId: user.id,
@@ -322,8 +322,8 @@ export const actions: Actions = {
 					fileType: resume.original_file_type as 'pdf' | 'docx'
 				}
 			});
-		} catch (inngestError) {
-			console.error('Inngest error:', inngestError);
+		} catch (workflowError) {
+			console.error('Workflow error:', workflowError);
 			return fail(500, { error: 'Failed to trigger parsing. Please try again.' });
 		}
 
