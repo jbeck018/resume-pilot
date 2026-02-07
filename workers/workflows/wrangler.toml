@@ -1,0 +1,62 @@
+# Cloudflare Workflows Worker
+# This worker handles all durable workflow executions for HowlerHire
+# Deployed separately from the main SvelteKit Pages app
+
+name = "howlerhire-workflows"
+main = "src/index.ts"
+compatibility_date = "2024-10-22"
+compatibility_flags = ["nodejs_compat"]
+
+# Observability for debugging
+[observability]
+enabled = true
+
+# CPU limits for AI workloads (5 minutes max per step)
+[limits]
+cpu_ms = 300_000
+
+# Workflow definitions
+[[workflows]]
+name = "resume-generation-workflow"
+binding = "RESUME_GENERATION"
+class_name = "ResumeGenerationWorkflow"
+
+[[workflows]]
+name = "resume-parsing-workflow"
+binding = "RESUME_PARSING"
+class_name = "ResumeParsingWorkflow"
+
+[[workflows]]
+name = "job-discovery-workflow"
+binding = "JOB_DISCOVERY"
+class_name = "JobDiscoveryWorkflow"
+
+[[workflows]]
+name = "profile-sync-workflow"
+binding = "PROFILE_SYNC"
+class_name = "ProfileSyncWorkflow"
+
+[[workflows]]
+name = "weekly-summary-workflow"
+binding = "WEEKLY_SUMMARY"
+class_name = "WeeklySummaryWorkflow"
+
+# Environment variables (set via wrangler secret or dashboard)
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets should be set via:
+# wrangler secret put SUPABASE_URL
+# wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+# wrangler secret put ANTHROPIC_API_KEY
+# wrangler secret put CLOUDFLARE_AI_GATEWAY_URL
+# wrangler secret put RESEND_API_KEY
+
+# Cron triggers for scheduled workflows
+[triggers]
+crons = [
+  # Weekly summary emails - Every Monday at 9 AM UTC
+  "0 9 * * 1",
+  # Daily job discovery - Every day at 6 AM UTC
+  "0 6 * * *"
+]
