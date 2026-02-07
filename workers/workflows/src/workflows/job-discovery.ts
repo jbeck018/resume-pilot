@@ -34,7 +34,7 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 				const supabase = createSupabaseClient(this.env);
 				const { data, error } = await supabase
 					.from('profiles')
-					.select('skills, target_job_titles, target_locations, remote_preference, min_salary')
+					.select('skills, preferred_roles, preferred_locations, remote_preference, min_salary')
 					.eq('user_id', userId)
 					.single();
 
@@ -45,8 +45,8 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 			});
 
 			// Build search criteria from profile + params
-			const keywords = searchCriteria?.keywords || userProfile.target_job_titles || [];
-			const location = searchCriteria?.location || userProfile.target_locations?.[0] || '';
+			const keywords = searchCriteria?.keywords || userProfile.preferred_roles || [];
+			const location = searchCriteria?.location || userProfile.preferred_locations?.[0] || '';
 			const remoteOnly = searchCriteria?.remote ?? userProfile.remote_preference === 'remote';
 
 			// Step 2: Search RemoteOK (if remote preference)
