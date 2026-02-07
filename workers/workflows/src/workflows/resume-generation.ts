@@ -15,6 +15,8 @@ export class ResumeGenerationWorkflow extends WorkflowEntrypoint<Env, ResumeGene
 	): Promise<ResumeGenerationResult> {
 		const { userId, jobId, applicationId, skipUsageCheck = false } = event.payload;
 
+		console.log(`[ResumeGenerationWorkflow] Starting for userId=${userId}, jobId=${jobId}, applicationId=${applicationId}`);
+
 		try {
 			// Step 1: Check usage limits (unless skipped)
 			if (!skipUsageCheck) {
@@ -146,7 +148,7 @@ Return as JSON:
 }`;
 
 					const response = await generateWithClaude(this.env, {
-						model: 'claude-3-5-haiku-20241022', // Use Haiku for analysis (cheaper)
+						model: 'claude-haiku-4-5-20251001', // Use Haiku for analysis (cheaper)
 						messages: [{ role: 'user', content: prompt }],
 						maxTokens: 2048,
 						temperature: 0.3
@@ -269,6 +271,8 @@ Return the resume content in markdown format.`;
 					(skill: string) => !matchedSkills.includes(skill)
 				);
 
+				console.log(`[ResumeGenerationWorkflow] Saving applicationId=${applicationId} with status=ready, resume length=${generatedResume.length}`);
+
 				const { error } = await supabase
 					.from('job_applications')
 					.update({
@@ -285,6 +289,7 @@ Return the resume content in markdown format.`;
 				if (error) throw new Error(`Failed to save: ${error.message}`);
 			});
 
+			console.log(`[ResumeGenerationWorkflow] Completed successfully for applicationId=${applicationId}`);
 			return {
 				success: true,
 				matchScore: scores.matchScore,
@@ -293,14 +298,17 @@ Return the resume content in markdown format.`;
 				resumeLength: generatedResume.length
 			};
 		} catch (error) {
+			console.error(`[ResumeGenerationWorkflow] Error for applicationId=${applicationId}:`, error);
 			// Mark application as failed
 			await step.do('mark-failed', async () => {
 				const supabase = createSupabaseClient(this.env);
+				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+				console.log(`[ResumeGenerationWorkflow] Marking applicationId=${applicationId} as failed: ${errorMessage}`);
 				await supabase
 					.from('job_applications')
 					.update({
 						status: 'failed',
-						error_message: error instanceof Error ? error.message : 'Unknown error',
+						error_message: errorMessage,
 						updated_at: new Date().toISOString()
 					})
 					.eq('id', applicationId);

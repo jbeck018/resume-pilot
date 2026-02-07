@@ -25,11 +25,70 @@
 	import EmailTemplates from '$lib/components/EmailTemplates.svelte';
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
+	import { sanitizeHtml } from '$lib/utils/sanitize';
+	import { onMount } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let activeTab = $state<'resume' | 'cover' | 'emails'>('resume');
 	let feedbackReason = $state('');
+	let isPolling = $state(false);
+	let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+	// Poll for application status updates when generating
+	async function pollApplicationStatus() {
+		if (!data.application?.id) return;
+
+		try {
+			const response = await fetch(`/api/applications/${data.application.id}`);
+			if (!response.ok) throw new Error(`Failed to fetch status: ${response.status}`);
+
+			const updated = await response.json();
+
+			// Update the application data
+			data.application.status = updated.status;
+			data.application.tailored_resume = updated.tailored_resume;
+			data.application.cover_letter = updated.cover_letter;
+			data.application.error_message = updated.error_message;
+			data.application.match_score = updated.match_score;
+			data.application.ats_score = updated.ats_score;
+
+			// Stop polling when no longer generating
+			if (updated.status !== 'generating') {
+				if (pollInterval) {
+					clearInterval(pollInterval);
+					pollInterval = null;
+				}
+				isPolling = false;
+
+				// Show success toast
+				if (updated.status === 'ready') {
+					toast.success('Documents generated successfully!');
+				} else if (updated.status === 'failed' || updated.status === 'error') {
+					toast.error(`Generation failed: ${updated.error_message || 'Unknown error'}`);
+				}
+			}
+		} catch (error) {
+			console.error('Failed to poll application status:', error);
+			// Continue polling on network errors
+		}
+	}
+
+	onMount(() => {
+		// Start polling if application is currently generating
+		if (data.application?.status === 'generating') {
+			isPolling = true;
+			// Poll immediately, then every 2 seconds
+			pollApplicationStatus();
+			pollInterval = setInterval(pollApplicationStatus, 2000);
+
+			return () => {
+				if (pollInterval) {
+					clearInterval(pollInterval);
+				}
+			};
+		}
+	});
 
 	function copyToClipboard(text: string) {
 		navigator.clipboard.writeText(text);
@@ -353,11 +412,13 @@
 							<div class="overflow-x-auto rounded-lg border bg-muted/30 p-6">
 								<div class="prose prose-sm max-w-none break-words dark:prose-invert">
 									{#if activeTab === 'resume'}
-										{@html data.application.tailored_resume?.replace(/\n/g, '<br>') ||
-											'No resume generated yet'}
+										{@html data.application.tailored_resume
+											? sanitizeHtml(data.application.tailored_resume)
+											: 'No resume generated yet'}
 									{:else}
-										{@html data.application.cover_letter?.replace(/\n/g, '<br>') ||
-											'No cover letter generated yet'}
+										{@html data.application.cover_letter
+											? sanitizeHtml(data.application.cover_letter)
+											: 'No cover letter generated yet'}
 									{/if}
 								</div>
 							</div>
@@ -396,7 +457,7 @@
 				{#if data.job.description}
 					<div class="overflow-x-auto">
 						<div class="prose prose-sm max-w-none break-words dark:prose-invert">
-							{@html data.job.description.replace(/\n/g, '<br>')}
+							{@html sanitizeHtml(data.job.description)}
 						</div>
 					</div>
 				{:else}

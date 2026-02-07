@@ -52,7 +52,7 @@
 	});
 </script>
 
-<div class="flex min-h-screen">
+<div class="flex min-h-screen overflow-hidden">
 	<!-- Mobile Header -->
 	<header class="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-card px-4 md:hidden">
 		<div class="flex items-center gap-2">
@@ -81,7 +81,7 @@
 
 	<!-- Sidebar -->
 	<aside
-		class="fixed inset-y-0 left-0 z-50 w-64 border-r bg-card transition-transform duration-300 md:translate-x-0 {mobileMenuOpen
+		class="fixed inset-y-0 left-0 z-50 w-64 flex-shrink-0 border-r bg-card transition-transform duration-300 md:translate-x-0 {mobileMenuOpen
 			? 'translate-x-0'
 			: '-translate-x-full'} md:block"
 	>
@@ -135,8 +135,8 @@
 	</aside>
 
 	<!-- Main content -->
-	<main class="flex-1 pt-14 md:ml-64 md:pt-0">
-		<div class="container py-6 md:py-8">
+	<main class="min-w-0 flex-1 overflow-x-hidden pt-14 md:ml-64 md:pt-0">
+		<div class="container max-w-full py-6 md:py-8">
 			{@render children()}
 		</div>
 	</main>
