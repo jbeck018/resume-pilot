@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 // App start time for uptime calculation
@@ -23,7 +24,69 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	weekStart.setDate(weekStart.getDate() + diff);
 	weekStart.setHours(0, 0, 0, 0);
 
-	// Run all queries in parallel
+	let results;
+	try {
+		// Run all queries in parallel
+		results = await Promise.all([
+			// User stats
+			supabase.from('profiles').select('id', { count: 'exact', head: true }),
+
+			// New users last 7 days
+			supabase
+				.from('profiles')
+				.select('id', { count: 'exact', head: true })
+				.gte('created_at', sevenDaysAgo.toISOString()),
+
+			// New users last 30 days
+			supabase
+				.from('profiles')
+				.select('id', { count: 'exact', head: true })
+				.gte('created_at', thirtyDaysAgo.toISOString()),
+
+			// Active users (logged in last 7 days - approximate via updated_at)
+			supabase
+				.from('profiles')
+				.select('id', { count: 'exact', head: true })
+				.gte('updated_at', sevenDaysAgo.toISOString()),
+
+			// Total jobs
+			supabase.from('jobs').select('id', { count: 'exact', head: true }),
+
+			// Jobs by source
+			supabase.from('jobs').select('source'),
+
+			// Jobs discovered today
+			supabase
+				.from('jobs')
+				.select('id', { count: 'exact', head: true })
+				.gte('discovered_at', todayStart.toISOString()),
+
+			// Jobs discovered this week
+			supabase
+				.from('jobs')
+				.select('id', { count: 'exact', head: true })
+				.gte('discovered_at', weekStart.toISOString()),
+
+			// Total resumes
+			supabase.from('resumes').select('id', { count: 'exact', head: true }),
+
+			// Applications by status
+			supabase.from('job_applications').select('status'),
+
+			// Subscriptions by tier
+			supabase.from('user_subscriptions').select('tier_id, status, subscription_tiers(name)'),
+
+			// Database health check
+			supabase.from('profiles').select('id').limit(1)
+		]);
+	} catch (err) {
+		console.error('[Admin Dashboard] Failed to load dashboard stats:', err);
+		error(500, {
+			message: 'Failed to load dashboard statistics. Please try again later.',
+			code: 'DASHBOARD_LOAD_FAILED'
+		});
+	}
+
 	const [
 		// User stats
 		totalUsersResult,
@@ -46,58 +109,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 
 		// Database connection check
 		dbCheckResult
-	] = await Promise.all([
-		// Total users (profiles count)
-		supabase.from('profiles').select('id', { count: 'exact', head: true }),
-
-		// New users last 7 days
-		supabase
-			.from('profiles')
-			.select('id', { count: 'exact', head: true })
-			.gte('created_at', sevenDaysAgo.toISOString()),
-
-		// New users last 30 days
-		supabase
-			.from('profiles')
-			.select('id', { count: 'exact', head: true })
-			.gte('created_at', thirtyDaysAgo.toISOString()),
-
-		// Active users (logged in last 7 days - approximate via updated_at)
-		supabase
-			.from('profiles')
-			.select('id', { count: 'exact', head: true })
-			.gte('updated_at', sevenDaysAgo.toISOString()),
-
-		// Total jobs
-		supabase.from('jobs').select('id', { count: 'exact', head: true }),
-
-		// Jobs by source
-		supabase.from('jobs').select('source'),
-
-		// Jobs discovered today
-		supabase
-			.from('jobs')
-			.select('id', { count: 'exact', head: true })
-			.gte('discovered_at', todayStart.toISOString()),
-
-		// Jobs discovered this week
-		supabase
-			.from('jobs')
-			.select('id', { count: 'exact', head: true })
-			.gte('discovered_at', weekStart.toISOString()),
-
-		// Total resumes
-		supabase.from('resumes').select('id', { count: 'exact', head: true }),
-
-		// Applications by status
-		supabase.from('job_applications').select('status'),
-
-		// Subscriptions by tier
-		supabase.from('user_subscriptions').select('tier_id, status, subscription_tiers(name)'),
-
-		// Database health check
-		supabase.from('profiles').select('id').limit(1)
-	]);
+	] = results;
 
 	// Process jobs by source
 	const jobsBySource: Record<string, number> = {};

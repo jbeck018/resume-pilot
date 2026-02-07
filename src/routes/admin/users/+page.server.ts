@@ -22,19 +22,33 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const db = getDb();
 
-	// Get all users
-	const users = await db
-		.select({
-			id: profiles.id,
-			userId: profiles.userId,
-			email: profiles.email,
-			fullName: profiles.fullName,
-			role: profiles.role,
-			createdAt: profiles.createdAt,
-			updatedAt: profiles.updatedAt
-		})
-		.from(profiles)
-		.orderBy(desc(profiles.createdAt));
+	let users;
+	let rootAdmin;
+
+	try {
+		// Get all users
+		users = await db
+			.select({
+				id: profiles.id,
+				userId: profiles.userId,
+				email: profiles.email,
+				fullName: profiles.fullName,
+				role: profiles.role,
+				createdAt: profiles.createdAt,
+				updatedAt: profiles.updatedAt
+			})
+			.from(profiles)
+			.orderBy(desc(profiles.createdAt));
+
+		// Check if current user is root admin
+		rootAdmin = await isRootAdmin(user.id);
+	} catch (err) {
+		console.error('[Admin Users] Failed to load users:', err);
+		throw error(500, {
+			message: 'Failed to load user list. Please try again later.',
+			code: 'USERS_LOAD_FAILED'
+		});
+	}
 
 	// Calculate stats
 	const totalUsers = users.length;
@@ -42,9 +56,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		(u) => u.role === 'admin' || u.role === 'root_admin'
 	).length;
 	const regularCount = users.filter((u) => u.role === 'user').length;
-
-	// Check if current user is root admin
-	const rootAdmin = await isRootAdmin(user.id);
 
 	return {
 		users,

@@ -22,20 +22,33 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const db = getDb();
 
-	// Get all invitations
-	const invitations = await db
-		.select()
-		.from(invitedUsers)
-		.orderBy(desc(invitedUsers.createdAt));
+	let invitations;
+	let adminCountResult;
+	let rootAdmin;
 
-	// Get admin count (for stats)
-	const [adminCountResult] = await db
-		.select({ count: count() })
-		.from(profiles)
-		.where(or(eq(profiles.role, 'admin'), eq(profiles.role, 'root_admin')));
+	try {
+		// Get all invitations
+		invitations = await db
+			.select()
+			.from(invitedUsers)
+			.orderBy(desc(invitedUsers.createdAt));
 
-	// Determine if current user is root admin
-	const rootAdmin = await isRootAdmin(user.id);
+		// Get admin count (for stats)
+		const adminCountResults = await db
+			.select({ count: count() })
+			.from(profiles)
+			.where(or(eq(profiles.role, 'admin'), eq(profiles.role, 'root_admin')));
+		adminCountResult = adminCountResults[0];
+
+		// Determine if current user is root admin
+		rootAdmin = await isRootAdmin(user.id);
+	} catch (err) {
+		console.error('[Admin Invitations] Failed to load invitations:', err);
+		throw error(500, {
+			message: 'Failed to load invitations. Please try again later.',
+			code: 'INVITATIONS_LOAD_FAILED'
+		});
+	}
 
 	// Calculate stats
 	const pendingCount = invitations.filter((inv) => inv.status === 'pending').length;
