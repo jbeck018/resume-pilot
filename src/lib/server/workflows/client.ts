@@ -217,34 +217,3 @@ export class WorkflowsClient {
 
 // Singleton instance
 export const workflowsClient = new WorkflowsClient();
-
-// Re-export for convenience - allows gradual migration from Inngest
-export const workflows = {
-	/**
-	 * Send a workflow event (similar to inngest.send)
-	 * Provides compatibility layer for existing Inngest usage
-	 */
-	async send(event: {
-		name: string;
-		data: Record<string, unknown>;
-	}): Promise<{ instanceId: string }> {
-		const { name, data } = event;
-
-		// Map Inngest event names to workflow types
-		const workflowMap: Record<string, WorkflowType> = {
-			'resume/generation.requested': 'resume-generation',
-			'resume/parsing.requested': 'resume-parsing',
-			'jobs/discovery.requested': 'job-discovery',
-			'profile/sync.requested': 'profile-sync',
-			'email/weekly-summary': 'weekly-summary'
-		};
-
-		const workflow = workflowMap[name];
-		if (!workflow) {
-			throw new Error(`Unknown workflow event: ${name}`);
-		}
-
-		const result = await workflowsClient.trigger(workflow, data as never);
-		return { instanceId: result.instanceId };
-	}
-};

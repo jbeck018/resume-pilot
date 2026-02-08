@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { workflows } from '$lib/server/workflows/client';
+import { workflowsClient } from '$lib/server/workflows/client';
 
 // Manual trigger for job discovery (for testing)
 export const POST: RequestHandler = async ({ locals: { user } }) => {
@@ -9,10 +9,7 @@ export const POST: RequestHandler = async ({ locals: { user } }) => {
 	}
 
 	try {
-		await workflows.send({
-			name: 'jobs/discovery.requested',
-			data: { userId: user.id }
-		});
+		await workflowsClient.discoverJobs(user.id);
 
 		return json({ success: true, message: 'Job discovery triggered' });
 	} catch (error) {

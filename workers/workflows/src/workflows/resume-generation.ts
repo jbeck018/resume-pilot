@@ -2,11 +2,18 @@
 // Migrated from Inngest to Cloudflare Workflows for better Cloudflare integration
 // Uses 6-phase pipeline: Research -> Template -> Discovery -> Assembly -> Generation -> Save
 
-import { WorkflowEntrypoint, WorkflowStep, NonRetryableError } from 'cloudflare:workers';
+import { WorkflowEntrypoint, WorkflowStep } from 'cloudflare:workers';
 import type { WorkflowEvent } from 'cloudflare:workers';
 import type { Env, ResumeGenerationParams, ResumeGenerationResult } from '../types';
+import type { Database } from '@howlerhire/database-types';
 import { createSupabaseClient } from '../utils/supabase';
 import { generateWithClaude } from '../utils/anthropic';
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type ResumeRow = Database['public']['Tables']['resumes']['Row'];
+type JobRow = Database['public']['Tables']['jobs']['Row'];
+type JobAppUpdate = Database['public']['Tables']['job_applications']['Update'];
+type JobUpdate = Database['public']['Tables']['jobs']['Update'];
 
 export class ResumeGenerationWorkflow extends WorkflowEntrypoint<Env, ResumeGenerationParams> {
 	async run(
@@ -23,14 +30,26 @@ export class ResumeGenerationWorkflow extends WorkflowEntrypoint<Env, ResumeGene
 				const usageCheck = await step.do('check-usage-limit', async () => {
 					const supabase = createSupabaseClient(this.env);
 
-					// Get user's subscription tier
-					const { data: profile } = await supabase
-						.from('profiles')
-						.select('subscription_tier')
+					// Get user's subscription tier via separate queries
+					const { data: subscription } = await supabase
+						.from('user_subscriptions')
+						.select('tier_id')
 						.eq('user_id', userId)
+						.eq('status', 'active')
 						.single();
 
-					const tier = profile?.subscription_tier || 'free';
+					let tier = 'free';
+					if (subscription) {
+						const sub = subscription as unknown as { tier_id: string };
+						const { data: tierRow } = await supabase
+							.from('subscription_tiers')
+							.select('name')
+							.eq('id', sub.tier_id)
+							.single();
+						if (tierRow) {
+							tier = (tierRow as unknown as { name: string }).name;
+						}
+					}
 
 					// Get usage count for current week
 					const startOfWeek = new Date();
@@ -65,13 +84,14 @@ export class ResumeGenerationWorkflow extends WorkflowEntrypoint<Env, ResumeGene
 					// Mark application as limit exceeded
 					await step.do('mark-limit-exceeded', async () => {
 						const supabase = createSupabaseClient(this.env);
+						const updateData: JobAppUpdate = {
+							status: 'limit_exceeded',
+							error_message: `Weekly limit reached (${usageCheck.used}/${usageCheck.limit})`,
+							updated_at: new Date().toISOString()
+						};
 						await supabase
 							.from('job_applications')
-							.update({
-								status: 'limit_exceeded',
-								error_message: `Weekly limit reached (${usageCheck.used}/${usageCheck.limit})`,
-								updated_at: new Date().toISOString()
-							})
+							.update(updateData as never)
 							.eq('id', applicationId);
 					});
 
@@ -93,32 +113,29 @@ export class ResumeGenerationWorkflow extends WorkflowEntrypoint<Env, ResumeGene
 					.single();
 
 				if (error) throw new Error(`Failed to get job: ${error.message}`);
-				return data;
+				return data as unknown as JobRow;
 			});
 
 			// Step 3: Get user profile and resume
-			const userData = await step.do('get-user-data', async () => {
-				const supabase = createSupabaseClient(this.env);
+			const userData: { profile: ProfileRow; resume: ResumeRow | null } = await step.do(
+				'get-user-data',
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				async (): Promise<any> => {
+					const supabase = createSupabaseClient(this.env);
 
-				const [profileResult, resumeResult] = await Promise.all([
-					supabase.from('profiles').select('*').eq('user_id', userId).single(),
-					supabase
-						.from('resumes')
-						.select('*')
-						.eq('user_id', userId)
-						.eq('is_default', true)
-						.single()
-				]);
+					const profileResult = await supabase.from('profiles').select('*').eq('user_id', userId).single();
+					const resumeResult = await supabase.from('resumes').select('*').eq('user_id', userId).eq('is_default', true).single();
 
-				if (profileResult.error) {
-					throw new Error(`Failed to get profile: ${profileResult.error.message}`);
+					if (profileResult.error) {
+						throw new Error(`Failed to get profile: ${profileResult.error.message}`);
+					}
+
+					return {
+						profile: profileResult.data,
+						resume: resumeResult.data || null
+					};
 				}
-
-				return {
-					profile: profileResult.data,
-					resume: resumeResult.data
-				};
-			});
+			);
 
 			// Step 4: Analyze job requirements
 			const analysis = await step.do(
@@ -162,7 +179,13 @@ Return as JSON:
 						jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
 					}
 
-					return JSON.parse(jsonText);
+					return JSON.parse(jsonText) as {
+						requiredSkills: string[];
+						preferredSkills: string[];
+						experienceYears: number;
+						keyResponsibilities: string[];
+						cultureIndicators: string[];
+					};
 				}
 			);
 
@@ -187,7 +210,7 @@ Key Responsibilities: ${analysis.keyResponsibilities.join('; ')}
 CANDIDATE PROFILE:
 Name: ${userData.profile.full_name}
 Email: ${userData.profile.email}
-Skills: ${profileSkills.join(', ')}
+Skills: ${(profileSkills as string[]).join(', ')}
 Summary: ${userData.profile.summary || 'Not provided'}
 
 EXISTING RESUME CONTENT:
@@ -216,7 +239,7 @@ Return the resume content in markdown format.`;
 
 			// Step 6: Calculate match scores
 			const scores = await step.do('calculate-scores', async () => {
-				const profileSkills = (userData.profile.skills || []).map((s: string) => s.toLowerCase());
+				const profileSkills = ((userData.profile.skills || []) as string[]).map((s: string) => s.toLowerCase());
 				const requiredSkills = analysis.requiredSkills.map((s: string) => s.toLowerCase());
 				const preferredSkills = analysis.preferredSkills.map((s: string) => s.toLowerCase());
 
@@ -234,7 +257,7 @@ Return the resume content in markdown format.`;
 				);
 
 				// Simple ATS score based on keyword presence
-				const resumeLower = generatedResume.toLowerCase();
+				const resumeLower = (generatedResume as string).toLowerCase();
 				const keywordMatches = [...requiredSkills, ...preferredSkills].filter((skill: string) =>
 					resumeLower.includes(skill)
 				).length;
@@ -246,7 +269,7 @@ Return the resume content in markdown format.`;
 				const hasExperience = resumeLower.includes('experience') || resumeLower.includes('work');
 				const hasSkills = resumeLower.includes('skills');
 				const qualityScore = Math.round(
-					(generatedResume.length > 1000 ? 40 : 20) +
+					((generatedResume as string).length > 1000 ? 40 : 20) +
 						(hasContact ? 20 : 0) +
 						(hasExperience ? 20 : 0) +
 						(hasSkills ? 20 : 0)
@@ -259,43 +282,43 @@ Return the resume content in markdown format.`;
 			await step.do('save-application', async () => {
 				const supabase = createSupabaseClient(this.env);
 
-				// Extract matched skills
-				const profileSkills = (userData.profile.skills || []).map((s: string) => s.toLowerCase());
-				const allRequiredSkills = analysis.requiredSkills.map((s: string) => s.toLowerCase());
-				const matchedSkills = allRequiredSkills.filter((skill: string) =>
-					profileSkills.some((ps: string) => ps.includes(skill) || skill.includes(ps))
-				);
+				console.log(`[ResumeGenerationWorkflow] Saving applicationId=${applicationId} with status=ready, resume length=${(generatedResume as string).length}`);
 
-				// Calculate skill gaps
-				const skillGaps = allRequiredSkills.filter(
-					(skill: string) => !matchedSkills.includes(skill)
-				);
-
-				console.log(`[ResumeGenerationWorkflow] Saving applicationId=${applicationId} with status=ready, resume length=${generatedResume.length}`);
-
+				// Update the job_applications row with the generated resume
+				// Note: match_score lives on the jobs table, not job_applications
+				const appUpdate: JobAppUpdate = {
+					tailored_resume: generatedResume as string,
+					status: 'ready',
+					updated_at: new Date().toISOString()
+				};
 				const { error } = await supabase
 					.from('job_applications')
-					.update({
-						tailored_resume: generatedResume,
-						match_score: scores.matchScore,
-						ats_score: scores.atsScore,
-						matched_skills: matchedSkills,
-						skill_gaps: skillGaps,
-						status: 'ready',
-						updated_at: new Date().toISOString()
-					})
+					.update(appUpdate as never)
 					.eq('id', applicationId);
 
-				if (error) throw new Error(`Failed to save: ${error.message}`);
+				if (error) throw new Error(`Failed to save application: ${error.message}`);
+
+				// Also update the job's match_score
+				const jobUpdate: JobUpdate = {
+					match_score: scores.matchScore as number,
+					updated_at: new Date().toISOString()
+				};
+				const { error: jobError } = await supabase
+					.from('jobs')
+					.update(jobUpdate as never)
+					.eq('id', jobId)
+					.eq('user_id', userId);
+
+				if (jobError) console.error(`Failed to update job match score: ${jobError.message}`);
 			});
 
 			console.log(`[ResumeGenerationWorkflow] Completed successfully for applicationId=${applicationId}`);
 			return {
 				success: true,
-				matchScore: scores.matchScore,
-				atsScore: scores.atsScore,
-				qualityScore: scores.qualityScore,
-				resumeLength: generatedResume.length
+				matchScore: scores.matchScore as number,
+				atsScore: scores.atsScore as number,
+				qualityScore: scores.qualityScore as number,
+				resumeLength: (generatedResume as string).length
 			};
 		} catch (error) {
 			console.error(`[ResumeGenerationWorkflow] Error for applicationId=${applicationId}:`, error);
@@ -304,13 +327,14 @@ Return the resume content in markdown format.`;
 				const supabase = createSupabaseClient(this.env);
 				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 				console.log(`[ResumeGenerationWorkflow] Marking applicationId=${applicationId} as failed: ${errorMessage}`);
+				const failUpdate: JobAppUpdate = {
+					status: 'failed',
+					error_message: errorMessage,
+					updated_at: new Date().toISOString()
+				};
 				await supabase
 					.from('job_applications')
-					.update({
-						status: 'failed',
-						error_message: errorMessage,
-						updated_at: new Date().toISOString()
-					})
+					.update(failUpdate as never)
 					.eq('id', applicationId);
 			});
 

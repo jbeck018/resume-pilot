@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { workflows } from '$lib/server/workflows/client';
+import { workflowsClient } from '$lib/server/workflows/client';
 import { usageService, subscriptionService } from '$lib/server/subscription';
 import type { Database } from '$lib/server/database/types';
 import {
@@ -322,14 +322,7 @@ export const actions: Actions = {
 		}
 
 		// Trigger regeneration
-		await workflows.send({
-			name: 'resume/generation.requested',
-			data: {
-				userId: user.id,
-				jobId: application.job_id,
-				applicationId
-			}
-		});
+		await workflowsClient.generateResume(user.id, application.job_id, applicationId);
 
 		return { success: true };
 	},
@@ -386,14 +379,7 @@ export const actions: Actions = {
 		}
 
 		// Trigger generation
-		await workflows.send({
-			name: 'resume/generation.requested',
-			data: {
-				userId: user.id,
-				jobId,
-				applicationId: application.id
-			}
-		});
+		await workflowsClient.generateResume(user.id, jobId, application.id);
 
 		return { success: true, applicationId: application.id };
 	}

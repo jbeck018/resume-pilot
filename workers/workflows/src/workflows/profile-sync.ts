@@ -5,7 +5,10 @@
 import { WorkflowEntrypoint, WorkflowStep } from 'cloudflare:workers';
 import type { WorkflowEvent } from 'cloudflare:workers';
 import type { Env, ProfileSyncParams, ProfileSyncResult } from '../types';
+import type { Database } from '@howlerhire/database-types';
 import { createSupabaseClient } from '../utils/supabase';
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
 interface GitHubUser {
 	login: string;
@@ -75,7 +78,7 @@ export class ProfileSyncWorkflow extends WorkflowEntrypoint<Env, ProfileSyncPara
 
 				if (!response.ok) {
 					console.error('Failed to fetch repos, continuing without them');
-					return [];
+					return [] as GitHubRepo[];
 				}
 
 				const allRepos = (await response.json()) as GitHubRepo[];
@@ -89,7 +92,7 @@ export class ProfileSyncWorkflow extends WorkflowEntrypoint<Env, ProfileSyncPara
 				const languageCount: Record<string, number> = {};
 				const topicsSet = new Set<string>();
 
-				for (const repo of repos) {
+				for (const repo of repos as GitHubRepo[]) {
 					if (repo.language) {
 						languageCount[repo.language] = (languageCount[repo.language] || 0) + 1;
 					}
@@ -148,7 +151,7 @@ export class ProfileSyncWorkflow extends WorkflowEntrypoint<Env, ProfileSyncPara
 				});
 
 				// Top projects for portfolio
-				const topProjects = repos
+				const topProjects = (repos as GitHubRepo[])
 					.sort((a, b) => b.stargazers_count - a.stargazers_count)
 					.slice(0, 5)
 					.map(repo => ({
@@ -161,10 +164,10 @@ export class ProfileSyncWorkflow extends WorkflowEntrypoint<Env, ProfileSyncPara
 				return {
 					skills: Array.from(skills),
 					projects: topProjects,
-					location: githubData.location,
-					bio: githubData.bio,
-					name: githubData.name,
-					websiteUrl: githubData.blog
+					location: (githubData as GitHubUser).location,
+					bio: (githubData as GitHubUser).bio,
+					name: (githubData as GitHubUser).name,
+					websiteUrl: (githubData as GitHubUser).blog
 				};
 			});
 
@@ -173,7 +176,7 @@ export class ProfileSyncWorkflow extends WorkflowEntrypoint<Env, ProfileSyncPara
 				const supabase = createSupabaseClient(this.env);
 
 				// Get current profile
-				const { data: profile, error: profileError } = await supabase
+				const { data, error: profileError } = await supabase
 					.from('profiles')
 					.select('full_name, summary, skills, location, portfolio_urls')
 					.eq('user_id', userId)
@@ -184,39 +187,42 @@ export class ProfileSyncWorkflow extends WorkflowEntrypoint<Env, ProfileSyncPara
 					return;
 				}
 
+				const profile = data as unknown as Pick<ProfileRow, 'full_name' | 'summary' | 'skills' | 'location' | 'portfolio_urls'>;
+				const extracted = extractedData as typeof extractedData;
+
 				const updates: Record<string, unknown> = {
 					updated_at: new Date().toISOString()
 				};
 
 				// Update name if not set
-				if (!profile.full_name && extractedData.name) {
-					updates.full_name = extractedData.name;
+				if (!profile.full_name && extracted.name) {
+					updates.full_name = extracted.name;
 				}
 
 				// Update summary/bio if not set
-				if (!profile.summary && extractedData.bio) {
-					updates.summary = extractedData.bio;
+				if (!profile.summary && extracted.bio) {
+					updates.summary = extracted.bio;
 				}
 
 				// Merge skills
-				if (extractedData.skills.length > 0) {
+				if ((extracted.skills as string[]).length > 0) {
 					const existingSkills = profile.skills || [];
-					const mergedSkills = Array.from(new Set([...existingSkills, ...extractedData.skills]));
+					const mergedSkills = Array.from(new Set([...existingSkills, ...(extracted.skills as string[])]));
 					if (mergedSkills.length > existingSkills.length) {
 						updates.skills = mergedSkills;
 					}
 				}
 
 				// Update location if not set
-				if (!profile.location && extractedData.location) {
-					updates.location = extractedData.location;
+				if (!profile.location && extracted.location) {
+					updates.location = extracted.location;
 				}
 
 				// Add website to portfolio URLs
-				if (extractedData.websiteUrl) {
+				if (extracted.websiteUrl) {
 					const existingUrls = profile.portfolio_urls || [];
-					if (!existingUrls.includes(extractedData.websiteUrl)) {
-						updates.portfolio_urls = [...existingUrls, extractedData.websiteUrl];
+					if (!existingUrls.includes(extracted.websiteUrl as string)) {
+						updates.portfolio_urls = [...existingUrls, extracted.websiteUrl];
 					}
 				}
 
@@ -224,7 +230,7 @@ export class ProfileSyncWorkflow extends WorkflowEntrypoint<Env, ProfileSyncPara
 				if (Object.keys(updates).length > 1) {
 					const { error: updateError } = await supabase
 						.from('profiles')
-						.update(updates)
+						.update(updates as never)
 						.eq('user_id', userId);
 
 					if (updateError) {
@@ -235,8 +241,8 @@ export class ProfileSyncWorkflow extends WorkflowEntrypoint<Env, ProfileSyncPara
 
 			return {
 				success: true,
-				skillsExtracted: extractedData.skills.length,
-				projectsFound: extractedData.projects.length
+				skillsExtracted: (extractedData as { skills: string[] }).skills.length,
+				projectsFound: (extractedData as { projects: unknown[] }).projects.length
 			};
 		} catch (error) {
 			return {

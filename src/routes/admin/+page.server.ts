@@ -81,10 +81,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 		]);
 	} catch (err) {
 		console.error('[Admin Dashboard] Failed to load dashboard stats:', err);
-		error(500, {
-			message: 'Failed to load dashboard statistics. Please try again later.',
-			code: 'DASHBOARD_LOAD_FAILED'
-		});
+		error(500, 'Failed to load dashboard statistics. Please try again later.');
 	}
 
 	const [

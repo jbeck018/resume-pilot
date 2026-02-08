@@ -44,10 +44,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		rootAdmin = await isRootAdmin(user.id);
 	} catch (err) {
 		console.error('[Admin Invitations] Failed to load invitations:', err);
-		throw error(500, {
-			message: 'Failed to load invitations. Please try again later.',
-			code: 'INVITATIONS_LOAD_FAILED'
-		});
+		throw error(500, 'Failed to load invitations. Please try again later.');
 	}
 
 	// Calculate stats

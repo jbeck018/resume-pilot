@@ -20,23 +20,14 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		// If database is unavailable, return 500 with helpful message
 		if (err instanceof Error) {
 			if (err.message.includes('SUPABASE_DB_URL')) {
-				error(500, {
-					message: 'Database configuration error. Please contact system administrator.',
-					code: 'DB_CONFIG_ERROR'
-				});
+				error(500, 'Database configuration error. Please contact system administrator.');
 			} else if (err.message.includes('connection') || err.message.includes('ECONNREFUSED')) {
-				error(500, {
-					message: 'Database connection failed. Please try again later.',
-					code: 'DB_CONNECTION_ERROR'
-				});
+				error(500, 'Database connection failed. Please try again later.');
 			}
 		}
 
 		// Generic database error
-		error(500, {
-			message: 'Failed to verify admin access. Please try again later.',
-			code: 'ADMIN_CHECK_FAILED'
-		});
+		error(500, 'Failed to verify admin access. Please try again later.');
 	}
 
 	if (!role || !['admin', 'root_admin'].includes(role)) {

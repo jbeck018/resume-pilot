@@ -197,7 +197,7 @@ export default {
 	},
 
 	// Scheduled handler - for cron-triggered workflows
-	async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+	async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
 		const hour = new Date().getUTCHours();
 		const dayOfWeek = new Date().getUTCDay(); // 0 = Sunday, 1 = Monday
 
@@ -208,9 +208,9 @@ export default {
 				env.WEEKLY_SUMMARY.create({
 					id: `weekly-summary-${new Date().toISOString().split('T')[0]}`,
 					params: {}
-				}).then(instance =>
+				}).then((instance: { id: string }) =>
 					console.log(`Weekly summary started: ${instance.id}`)
-				).catch(error =>
+				).catch((error: unknown) =>
 					console.error('Failed to start weekly summary:', error)
 				)
 			);

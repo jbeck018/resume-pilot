@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Database } from '$lib/server/database/types';
-import { workflows } from '$lib/server/workflows/client';
+import { workflowsClient } from '$lib/server/workflows/client';
 
 export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 	if (!user) {
@@ -124,15 +124,12 @@ export const actions: Actions = {
 
 			// Trigger background resume parsing job
 			try {
-				await workflows.send({
-					name: 'resume/parsing.requested',
-					data: {
-						userId: user.id,
-						resumeId: resumeData.id,
-						fileUrl: publicUrl,
-						fileType: file.type.includes('pdf') ? 'pdf' : 'docx'
-					}
-				});
+				await workflowsClient.parseResume(
+					user.id,
+					resumeData.id,
+					publicUrl,
+					file.type.includes('pdf') ? 'pdf' : 'docx'
+				);
 			} catch (error) {
 				console.error('Failed to trigger resume parsing:', error);
 				// Don't fail the upload if parsing trigger fails
@@ -190,13 +187,7 @@ export const actions: Actions = {
 		// Trigger GitHub profile sync if handle provided
 		if (githubHandle) {
 			try {
-				await workflows.send({
-					name: 'profile/sync.requested',
-					data: {
-						userId: user.id,
-						githubHandle
-					}
-				});
+				await workflowsClient.syncProfile(user.id, githubHandle);
 			} catch (error) {
 				console.error('Failed to trigger GitHub sync:', error);
 				// Don't fail - the profile is saved, sync can happen later

@@ -1,14 +1,20 @@
 // Types for Cloudflare Workflows
-import type { Workflow, WorkflowEvent, WorkflowStep } from 'cloudflare:workers';
+import type { WorkflowEvent, WorkflowStep } from 'cloudflare:workers';
+
+// Workflow binding type — matches Cloudflare's runtime interface
+interface WorkflowBinding {
+	create(options: { id: string; params: unknown }): Promise<{ id: string; status(): Promise<unknown> }>;
+	get(id: string): Promise<{ id: string; status(): Promise<unknown> }>;
+}
 
 // Environment bindings
 export interface Env {
 	// Workflow bindings
-	RESUME_GENERATION: Workflow;
-	RESUME_PARSING: Workflow;
-	JOB_DISCOVERY: Workflow;
-	PROFILE_SYNC: Workflow;
-	WEEKLY_SUMMARY: Workflow;
+	RESUME_GENERATION: WorkflowBinding;
+	RESUME_PARSING: WorkflowBinding;
+	JOB_DISCOVERY: WorkflowBinding;
+	PROFILE_SYNC: WorkflowBinding;
+	WEEKLY_SUMMARY: WorkflowBinding;
 
 	// Secrets
 	SUPABASE_URL: string;
@@ -99,6 +105,7 @@ export interface WeeklySummaryResult {
 	sent?: number;
 	failed?: number;
 	skipped?: number;
+	error?: string;
 }
 
 // API Request types

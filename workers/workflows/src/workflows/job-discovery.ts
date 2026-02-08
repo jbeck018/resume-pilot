@@ -1,11 +1,15 @@
 // Job Discovery Workflow
 // Searches multiple job sources and saves matching jobs to the database
-// Sources: Greenhouse, Lever, RemoteOK, WeWorkRemotely, Jooble
+// Sources: RemoteOK, WeWorkRemotely
 
 import { WorkflowEntrypoint, WorkflowStep } from 'cloudflare:workers';
 import type { WorkflowEvent } from 'cloudflare:workers';
 import type { Env, JobDiscoveryParams, JobDiscoveryResult } from '../types';
+import type { Database } from '@howlerhire/database-types';
 import { createSupabaseClient } from '../utils/supabase';
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type JobInsert = Database['public']['Tables']['jobs']['Insert'];
 
 interface JobListing {
 	title: string;
@@ -41,7 +45,7 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 				if (error) {
 					throw new Error(`Failed to get profile: ${error.message}`);
 				}
-				return data;
+				return data as unknown as Pick<ProfileRow, 'skills' | 'preferred_roles' | 'preferred_locations' | 'remote_preference' | 'min_salary'>;
 			});
 
 			// Build search criteria from profile + params
@@ -52,7 +56,7 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 			// Step 2: Search RemoteOK (if remote preference)
 			const remoteOkJobs = await step.do('search-remoteok', async () => {
 				if (!remoteOnly && !keywords.some((k: string) => k.toLowerCase().includes('remote'))) {
-					return [];
+					return [] as JobListing[];
 				}
 
 				try {
@@ -60,7 +64,7 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 						headers: { 'User-Agent': 'HowlerHire/1.0' }
 					});
 
-					if (!response.ok) return [];
+					if (!response.ok) return [] as JobListing[];
 
 					const jobs = (await response.json()) as Array<{
 						slug: string;
@@ -98,16 +102,16 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 							salaryMin: job.salary_min,
 							salaryMax: job.salary_max,
 							salaryCurrency: 'USD'
-						}));
+						})) as JobListing[];
 				} catch (error) {
 					console.error('RemoteOK search failed:', error);
-					return [];
+					return [] as JobListing[];
 				}
 			});
 
 			// Step 3: Search WeWorkRemotely RSS
 			const wwrJobs = await step.do('search-weworkremotely', async () => {
-				if (!remoteOnly) return [];
+				if (!remoteOnly) return [] as JobListing[];
 
 				try {
 					// WWR has RSS feeds by category
@@ -163,13 +167,13 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 					});
 				} catch (error) {
 					console.error('WeWorkRemotely search failed:', error);
-					return [];
+					return [] as JobListing[];
 				}
 			});
 
 			// Step 4: Combine and deduplicate jobs
 			const allJobs = await step.do('combine-jobs', async () => {
-				const combined = [...remoteOkJobs, ...wwrJobs];
+				const combined = [...(remoteOkJobs as JobListing[]), ...(wwrJobs as JobListing[])];
 
 				// Deduplicate by title + company
 				const seen = new Set<string>();
@@ -183,13 +187,13 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 
 			// Step 5: Calculate match scores and save to database
 			const savedCount = await step.do('save-jobs', async () => {
-				if (allJobs.length === 0) return 0;
+				if ((allJobs as JobListing[]).length === 0) return 0;
 
 				const supabase = createSupabaseClient(this.env);
-				const userSkills = (userProfile.skills || []).map((s: string) => s.toLowerCase());
+				const userSkills = ((userProfile.skills || []) as string[]).map((s: string) => s.toLowerCase());
 				let saved = 0;
 
-				for (const job of allJobs) {
+				for (const job of allJobs as JobListing[]) {
 					// Calculate simple match score
 					const jobText = `${job.title} ${job.description}`.toLowerCase();
 					const matchedSkills = userSkills.filter((skill: string) => jobText.includes(skill));
@@ -206,7 +210,7 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 					if (existing) continue;
 
 					// Insert new job
-					const { error } = await supabase.from('jobs').insert({
+					const insertData: JobInsert = {
 						user_id: userId,
 						title: job.title,
 						company: job.company,
@@ -216,13 +220,15 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 						source_url: job.sourceUrl,
 						source: job.source,
 						is_remote: job.isRemote,
-						salary_min: job.salaryMin,
-						salary_max: job.salaryMax,
+						salary_min: job.salaryMin ?? null,
+						salary_max: job.salaryMax ?? null,
 						salary_currency: job.salaryCurrency || 'USD',
 						match_score: matchScore,
 						status: 'new',
 						discovered_at: new Date().toISOString()
-					});
+					};
+
+					const { error } = await supabase.from('jobs').insert(insertData as never);
 
 					if (!error) saved++;
 				}
@@ -232,7 +238,7 @@ export class JobDiscoveryWorkflow extends WorkflowEntrypoint<Env, JobDiscoveryPa
 
 			return {
 				success: true,
-				jobsFound: savedCount,
+				jobsFound: savedCount as number,
 				sourcesSearched: 2 // RemoteOK + WWR
 			};
 		} catch (error) {

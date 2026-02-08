@@ -5,8 +5,46 @@
 import { WorkflowEntrypoint, WorkflowStep } from 'cloudflare:workers';
 import type { WorkflowEvent } from 'cloudflare:workers';
 import type { Env, ResumeParsingParams, ResumeParsingResult } from '../types';
+import type { Database } from '@howlerhire/database-types';
 import { createSupabaseClient } from '../utils/supabase';
 import { generateWithClaude } from '../utils/anthropic';
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+
+interface ParsedResumeData {
+	extractedText: string;
+	structuredData: {
+		name?: string;
+		email?: string;
+		phone?: string;
+		summary?: string;
+		skills?: string[];
+		experience?: Array<{
+			title: string;
+			company: string;
+			description: string;
+			location?: string;
+			startDate?: string;
+			endDate?: string;
+			current?: boolean;
+			skills?: string[];
+		}>;
+		education?: Array<{
+			institution: string;
+			degree: string;
+			field?: string;
+			startDate?: string;
+			endDate?: string;
+			gpa?: string;
+		}>;
+		certifications?: string[];
+		projects?: Array<{
+			name: string;
+			description: string;
+			url?: string;
+		}>;
+	};
+}
 
 // Prompt for structured resume extraction
 const RESUME_EXTRACTION_PROMPT = `You are a resume parsing expert. Analyze this resume and extract structured information.
@@ -122,11 +160,11 @@ export class ResumeParsingWorkflow extends WorkflowEntrypoint<Env, ResumeParsing
 			});
 
 			// Step 2: Parse and extract structured data
-			const parsedData = await step.do(
+			const parsedData: ParsedResumeData = await step.do(
 				'parse-and-structure',
 				{ retries: { limit: 2, delay: '10 seconds', backoff: 'exponential' } },
 				async () => {
-					const fileBuffer = Uint8Array.from(atob(fileData.base64), c => c.charCodeAt(0));
+					const fileBuffer = Uint8Array.from(atob((fileData as { base64: string }).base64), c => c.charCodeAt(0));
 
 					if (fileType === 'pdf') {
 						// Use Claude's native PDF support with prefill to force JSON
@@ -149,7 +187,7 @@ export class ResumeParsingWorkflow extends WorkflowEntrypoint<Env, ResumeParsing
 												source: {
 													type: 'base64',
 													media_type: 'application/pdf',
-													data: fileData.base64
+													data: (fileData as { base64: string }).base64
 												}
 											},
 											{
@@ -185,31 +223,26 @@ export class ResumeParsingWorkflow extends WorkflowEntrypoint<Env, ResumeParsing
 						const structured = parseClaudeJsonResponse(fullResponse);
 
 						// Build text summary for storage
+						const structuredAny = structured as Record<string, unknown>;
 						const textSummary = [
-							structured.name,
-							structured.email,
-							structured.phone,
-							structured.summary,
-							'Skills: ' + (structured.skills?.join(', ') || ''),
-							...(structured.experience?.map(
-								(e: { title: string; company: string; description: string }) =>
-									`${e.title} at ${e.company}: ${e.description}`
-							) || []),
-							...(structured.education?.map(
-								(e: { degree: string; field: string; institution: string }) =>
-									`${e.degree} in ${e.field} from ${e.institution}`
-							) || [])
+							structuredAny.name,
+							structuredAny.email,
+							structuredAny.phone,
+							structuredAny.summary,
+							'Skills: ' + ((structuredAny.skills as string[])?.join(', ') || ''),
+							...((structuredAny.experience as Array<{ title: string; company: string; description: string }>) || []).map(
+								(e) => `${e.title} at ${e.company}: ${e.description}`
+							),
+							...((structuredAny.education as Array<{ degree: string; field: string; institution: string }>) || []).map(
+								(e) => `${e.degree} in ${e.field} from ${e.institution}`
+							)
 						]
 							.filter(Boolean)
 							.join('\n\n');
 
-						return { extractedText: textSummary, structuredData: structured };
+						return { extractedText: textSummary, structuredData: structured } as ParsedResumeData;
 					} else if (fileType === 'docx') {
-						// For DOCX, we need to extract text first
-						// Note: mammoth may not work in Workers, so we'll use a simpler approach
-						// or call an external service
-
-						// For now, send raw text to Claude (DOCX support may need external processing)
+						// For DOCX, send raw text to Claude
 						const textContent = new TextDecoder().decode(fileBuffer);
 
 						const response = await generateWithClaude(this.env, {
@@ -232,23 +265,24 @@ export class ResumeParsingWorkflow extends WorkflowEntrypoint<Env, ResumeParsing
 						// Prepend the '{' we used as prefill
 						const fullResponse = '{' + response;
 						const structured = parseClaudeJsonResponse(fullResponse);
-						return { extractedText: textContent.substring(0, 50000), structuredData: structured };
+						return { extractedText: textContent.substring(0, 50000), structuredData: structured } as ParsedResumeData;
 					} else {
 						throw new Error(`Unsupported file type: ${fileType}`);
 					}
 				}
-			);
+			) as ParsedResumeData;
 
 			// Step 3: Save parsed data to resume record
 			await step.do('save-parsed-data', async () => {
 				const supabase = createSupabaseClient(this.env);
+				const resumeUpdate: Database['public']['Tables']['resumes']['Update'] = {
+					parsed_content: parsedData.extractedText,
+					structured_data: parsedData.structuredData as unknown as Database['public']['Tables']['resumes']['Update']['structured_data'],
+					updated_at: new Date().toISOString()
+				};
 				const { error } = await supabase
 					.from('resumes')
-					.update({
-						parsed_content: parsedData.extractedText,
-						structured_data: parsedData.structuredData,
-						updated_at: new Date().toISOString()
-					})
+					.update(resumeUpdate as never)
 					.eq('id', resumeId);
 
 				if (error) {
@@ -262,7 +296,7 @@ export class ResumeParsingWorkflow extends WorkflowEntrypoint<Env, ResumeParsing
 				const structured = parsedData.structuredData;
 
 				// Get current profile
-				const { data: profile, error: profileError } = await supabase
+				const { data, error: profileError } = await supabase
 					.from('profiles')
 					.select('full_name, summary, skills, experience, education')
 					.eq('user_id', userId)
@@ -272,6 +306,8 @@ export class ResumeParsingWorkflow extends WorkflowEntrypoint<Env, ResumeParsing
 					console.error('Failed to get profile:', profileError);
 					return;
 				}
+
+				const profile = data as unknown as Pick<ProfileRow, 'full_name' | 'summary' | 'skills' | 'experience' | 'education'>;
 
 				// Only update empty fields
 				const updates: Record<string, unknown> = {
@@ -284,24 +320,27 @@ export class ResumeParsingWorkflow extends WorkflowEntrypoint<Env, ResumeParsing
 				if (!profile.summary && structured.summary) {
 					updates.summary = structured.summary;
 				}
-				if ((!profile.skills || profile.skills.length === 0) && structured.skills?.length > 0) {
+				if ((!profile.skills || profile.skills.length === 0) && structured.skills && structured.skills.length > 0) {
 					updates.skills = structured.skills;
 				}
 				if (
-					(!profile.experience || profile.experience.length === 0) &&
-					structured.experience?.length > 0
+					(!profile.experience || (profile.experience as unknown[]).length === 0) &&
+					structured.experience && structured.experience.length > 0
 				) {
 					updates.experience = structured.experience;
 				}
 				if (
-					(!profile.education || profile.education.length === 0) &&
-					structured.education?.length > 0
+					(!profile.education || (profile.education as unknown[]).length === 0) &&
+					structured.education && structured.education.length > 0
 				) {
 					updates.education = structured.education;
 				}
 
 				if (Object.keys(updates).length > 1) {
-					await supabase.from('profiles').update(updates).eq('user_id', userId);
+					await supabase
+						.from('profiles')
+						.update(updates as never)
+						.eq('user_id', userId);
 				}
 			});
 

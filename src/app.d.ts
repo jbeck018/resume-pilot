@@ -17,8 +17,6 @@ declare global {
 		interface Platform {
 			env?: {
 				// Cloudflare environment variables
-				INNGEST_SIGNING_KEY?: string;
-				INNGEST_EVENT_KEY?: string;
 				SUPABASE_URL?: string;
 				SUPABASE_ANON_KEY?: string;
 				SUPABASE_SERVICE_ROLE_KEY?: string;

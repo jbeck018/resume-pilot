@@ -5,12 +5,28 @@
 import { WorkflowEntrypoint, WorkflowStep } from 'cloudflare:workers';
 import type { WorkflowEvent } from 'cloudflare:workers';
 import type { Env, WeeklySummaryParams, WeeklySummaryResult } from '../types';
+import type { Database } from '@howlerhire/database-types';
 import { createSupabaseClient } from '../utils/supabase';
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+
+interface UserForEmail {
+	user_id: string;
+	email: string;
+	full_name: string | null;
+	email_preferences: ProfileRow['email_preferences'];
+}
 
 interface EmailPreferences {
 	weeklySummary?: boolean;
 	resumeReady?: boolean;
 	newMatches?: boolean;
+}
+
+interface WeeklyEmailResults {
+	sent: string[];
+	failed: string[];
+	skipped: string[];
 }
 
 export class WeeklySummaryWorkflow extends WorkflowEntrypoint<Env, WeeklySummaryParams> {
@@ -38,12 +54,14 @@ export class WeeklySummaryWorkflow extends WorkflowEntrypoint<Env, WeeklySummary
 
 				if (error) throw new Error(`Failed to get users: ${error.message}`);
 
+				const rows = (data || []) as unknown as UserForEmail[];
+
 				// Filter users who want weekly summaries
-				return (data || []).filter(user => {
+				return rows.filter(user => {
 					const prefs = this.parseEmailPreferences(user.email_preferences);
 					return prefs.weeklySummary !== false; // Default to true
 				});
-			});
+			}) as UserForEmail[];
 
 			if (users.length === 0) {
 				return {
@@ -105,7 +123,7 @@ export class WeeklySummaryWorkflow extends WorkflowEntrypoint<Env, WeeklySummary
 						}
 
 						// Get top match job
-						const topJob = jobsResult.data?.[0];
+						const topJob = jobsResult.data?.[0] as unknown as { title: string; company: string; match_score: number } | undefined;
 
 						// Send email via Resend
 						if (this.env.RESEND_API_KEY) {
@@ -118,20 +136,6 @@ export class WeeklySummaryWorkflow extends WorkflowEntrypoint<Env, WeeklySummary
 
 							if (emailSent) {
 								sent.push(user.user_id);
-
-								// Log to email history
-								await supabase.from('email_send_history').insert({
-									user_id: user.user_id,
-									email_type: 'weekly_summary',
-									recipient_email: user.email,
-									subject: 'Your Weekly Job Search Summary',
-									status: 'sent',
-									metadata: {
-										weekStart: lastMonday.toISOString(),
-										weekEnd: lastSunday.toISOString(),
-										stats: { jobsDiscovered, resumesGenerated, applicationsSubmitted }
-									}
-								});
 							} else {
 								failed.push(user.user_id);
 							}
@@ -144,8 +148,8 @@ export class WeeklySummaryWorkflow extends WorkflowEntrypoint<Env, WeeklySummary
 					}
 				}
 
-				return { sent, failed, skipped };
-			});
+				return { sent, failed, skipped } as WeeklyEmailResults;
+			}) as WeeklyEmailResults;
 
 			return {
 				success: true,
@@ -170,7 +174,7 @@ export class WeeklySummaryWorkflow extends WorkflowEntrypoint<Env, WeeklySummary
 	}
 
 	private async sendEmail(
-		user: { email: string; full_name?: string },
+		user: { email: string; full_name: string | null },
 		stats: {
 			jobsDiscovered: number;
 			resumesGenerated: number;
@@ -201,7 +205,7 @@ export class WeeklySummaryWorkflow extends WorkflowEntrypoint<Env, WeeklySummary
 	}
 
 	private buildEmailHtml(
-		user: { full_name?: string },
+		user: { full_name: string | null },
 		stats: {
 			jobsDiscovered: number;
 			resumesGenerated: number;

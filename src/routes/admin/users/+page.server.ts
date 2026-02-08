@@ -44,10 +44,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		rootAdmin = await isRootAdmin(user.id);
 	} catch (err) {
 		console.error('[Admin Users] Failed to load users:', err);
-		throw error(500, {
-			message: 'Failed to load user list. Please try again later.',
-			code: 'USERS_LOAD_FAILED'
-		});
+		throw error(500, 'Failed to load user list. Please try again later.');
 	}
 
 	// Calculate stats
