@@ -108,14 +108,15 @@ function parseClaudeJsonResponse(text: string): Record<string, unknown> {
 	}
 
 	// Check for non-JSON responses (apologies, explanations, etc.)
-	const lowerText = jsonText.toLowerCase();
-	if (lowerText.startsWith('i ') || lowerText.startsWith('i\'') ||
-	    lowerText.startsWith('sorry') || lowerText.startsWith('unfortunately') ||
-	    lowerText.startsWith('the ') || lowerText.startsWith('this ')) {
-		throw new Error(`Claude returned a non-JSON response. First 100 chars: "${jsonText.substring(0, 100)}..."`);
+	// Also handle the prefill case where '{' was prepended: "{I apologize..."
+	const textToCheck = jsonText.startsWith('{') ? jsonText.substring(1).trim() : jsonText;
+	const lowerCheck = textToCheck.toLowerCase();
+	const nonJsonPrefixes = ['i ', 'i\'', 'i"', 'sorry', 'unfortunately', 'the ', 'this ', 'thank', 'apolog', 'note:'];
+	if (nonJsonPrefixes.some(prefix => lowerCheck.startsWith(prefix))) {
+		throw new Error(`Claude returned a non-JSON response instead of resume data. First 100 chars: "${jsonText.substring(0, 100)}..."`);
 	}
 
-	// Try to find JSON object if response has extra text
+	// Try to find a valid JSON object with balanced braces
 	const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
 	if (jsonMatch) {
 		jsonText = jsonMatch[0];
